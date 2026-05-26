@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// Fetch channel details from Supabase to determine provider\nconst channelId = $json.body?.channel_id || $json.channel_id;\nconst content = $json.body?.content || $json.content;\nconst phone = $json.body?.phone || $json.phone;\n\nconst channelResp = await $helpers.httpRequest({\n  method: 'GET',\n  url: `${$env.SUPABASE_URL}/rest/v1/channels?id=eq.${channelId}&select=*`,\n  headers: {\n    'apikey': $env.SUPABASE_SERVICE_KEY,\n    'Authorization': `Bearer ${$env.SUPABASE_SERVICE_KEY}`\n  }\n});\n\nconst channel = channelResp?.[0];\nif (!channel) {\n  throw new Error(`Channel ${channelId} not found`);\n}\n\nreturn [{\n  json: {\n    channel_id: channelId,\n    provider: channel.provider,\n    content: content,\n    phone: phone,\n    // Meta fields\n    phone_id: channel.phone_id,\n    access_token: channel.access_token,\n    // Evolution fields\n    evo_url: channel.url,\n    evo_instance: channel.instance,\n    evo_api_key: channel.api_key\n  }\n}];"
+        "functionCode": "// Fetch channel details from Supabase to determine provider\nconst channelId = $json.body?.channel_id || $json.channel_id;\nconst content = $json.body?.content || $json.content;\nconst phone = $json.body?.phone || $json.phone;\nconst contactId = $json.body?.contact_id || $json.contact_id;\n\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\n\nconst channelResp = await $helpers.httpRequest({\n  method: 'GET',\n  url: `${supabaseUrl}/rest/v1/channels?id=eq.${channelId}&select=*`,\n  headers: {\n    'apikey': serviceKey,\n    'Authorization': `Bearer ${serviceKey}`\n  }\n});\n\nconst channel = channelResp?.[0];\nif (!channel) {\n  throw new Error(`Channel ${channelId} not found`);\n}\n\nreturn [{\n  json: {\n    channel_id: channelId,\n    contact_id: contactId,\n    provider: channel.provider,\n    content: content,\n    phone: phone,\n    // Meta fields\n    phone_id: channel.phone_id,\n    access_token: channel.access_token,\n    // Evolution fields\n    evo_url: channel.url,\n    evo_instance: channel.instance,\n    evo_api_key: channel.api_key\n  }\n}];"
       },
       "id": "node-resolve-channel",
       "name": "Resolve Channel",
@@ -103,12 +103,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/messages",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
             { "name": "Content-Type", "value": "application/json" },
             { "name": "Prefer", "value": "return=representation" }
           ]
@@ -117,6 +117,7 @@
         "bodyParameters": {
           "parameters": [
             { "name": "channel_id", "value": "={{ $json.channel_id || $input.first().json.channel_id }}" },
+            { "name": "contact_id", "value": "={{ $json.contact_id || $input.first().json.contact_id }}" },
             { "name": "direction", "value": "out" },
             { "name": "content", "value": "={{ $json.content || $input.first().json.content }}" },
             { "name": "content_type", "value": "text" },

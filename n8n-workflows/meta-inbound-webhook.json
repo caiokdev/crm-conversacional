@@ -3,9 +3,9 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
+        "httpMethod": "ALL",
         "path": "webhook/meta",
-        "responseMode": "onReceived",
+        "responseMode": "responseNode",
         "options": {}
       },
       "id": "node-webhook-meta",
@@ -16,13 +16,64 @@
     },
     {
       "parameters": {
-        "functionCode": "// Parse Meta Cloud API webhook payload\nconst body = $input.first().json.body || $input.first().json;\n\n// Handle webhook verification challenge (GET)\nif (body['hub.mode'] === 'subscribe') {\n  return [{ json: { challenge: body['hub.challenge'] } }];\n}\n\n// Extract message data from Meta format\nconst entry = body.entry?.[0];\nconst changes = entry?.changes?.[0];\nconst value = changes?.value;\nconst message = value?.messages?.[0];\nconst contact = value?.contacts?.[0];\n\nif (!message) {\n  return [{ json: { skip: true, reason: 'No message in payload (status update or other event)' } }];\n}\n\nreturn [{\n  json: {\n    whatsapp_msg_id: message.id,\n    phone: message.from,\n    contact_name: contact?.profile?.name || message.from,\n    direction: 'in',\n    content: message.text?.body || message.caption || '[media]',\n    content_type: message.type || 'text',\n    media_url: message.image?.link || message.video?.link || message.audio?.link || message.document?.link || null,\n    timestamp: new Date(parseInt(message.timestamp) * 1000).toISOString(),\n    raw_payload: body\n  }\n}];"
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.query?.['hub.mode'] }}",
+              "operation": "equals",
+              "value2": "subscribe"
+            }
+          ]
+        }
+      },
+      "id": "node-if-verification",
+      "name": "Is Verification?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query?.['hub.challenge'] || '' }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
+      },
+      "id": "node-verify-meta-challenge",
+      "name": "Respond with Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"ok\"\n}",
+        "options": {}
+      },
+      "id": "node-instant-post-response",
+      "name": "Instant Response for POST",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 420]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse Meta Cloud API webhook payload\nconst body = $input.first().json.body || $input.first().json;\n\nconst entry = body.entry?.[0];\nconst changes = entry?.changes?.[0];\nconst value = changes?.value;\nconst message = value?.messages?.[0];\nconst contact = value?.contacts?.[0];\n\nif (!message) {\n  return [{ json: { skip: true, reason: 'No message in payload' } }];\n}\n\nconst msgId = message.id;\nconst phone = message.from;\nconst contactName = contact?.profile?.name || phone;\nconst type = message.type || 'text';\nlet content = message.text?.body || message.caption || '';\nlet mediaUrl = null;\n\n// If message has media, resolve the URL from Meta API\nif (['image', 'audio', 'video', 'document'].includes(type)) {\n  const mediaObj = message[type];\n  const mediaId = mediaObj?.id;\n  \n  if (mediaId) {\n    try {\n      const supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\n      const serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\n      const channelId = \"4886443e-4996-4d2a-83e1-d96f503e1a28\";\n      \n      const channelsResp = await $helpers.httpRequest({\n        method: 'GET',\n        url: `${supabaseUrl}/rest/v1/channels?id=eq.${channelId}&select=access_token`,\n        headers: {\n          'apikey': serviceKey,\n          'Authorization': `Bearer ${serviceKey}`\n        }\n      });\n      \n      const accessToken = channelsResp?.[0]?.access_token;\n      \n      if (accessToken) {\n        const mediaResp = await $helpers.httpRequest({\n          method: 'GET',\n          url: `https://graph.facebook.com/v20.0/${mediaId}`,\n          headers: {\n            'Authorization': `Bearer ${accessToken}`\n          }\n        });\n        \n        mediaUrl = mediaResp?.url || null;\n      }\n    } catch (e) {\n      console.error('Error resolving Meta media URL:', e.message);\n    }\n  }\n  \n  if (!content) {\n    if (type === 'image') content = '[Imagem]';\n    else if (type === 'audio') content = '[Áudio]';\n    else if (type === 'video') content = '[Vídeo]';\n    else if (type === 'document') content = '[Documento]';\n    else content = '[Mídia]';\n  }\n}\n\nreturn [{\n  json: {\n    whatsapp_msg_id: msgId,\n    phone: phone,\n    contact_name: contactName,\n    direction: 'in',\n    content: content,\n    content_type: type,\n    media_url: mediaUrl,\n    timestamp: new Date(parseInt(message.timestamp) * 1000).toISOString(),\n    raw_payload: body\n  }\n}];"
       },
       "id": "node-parse-meta",
       "name": "Parse Meta Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
-      "position": [480, 300]
+      "position": [900, 420]
     },
     {
       "parameters": {
@@ -39,35 +90,35 @@
       "name": "Has Message?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [700, 300]
+      "position": [1120, 420]
     },
     {
       "parameters": {
-        "functionCode": "// Check for duplicate message (idempotency)\nconst msgId = $json.whatsapp_msg_id;\n\n// Upsert contact\nconst contactResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: `${$env.SUPABASE_URL}/rest/v1/contacts`,\n  headers: {\n    'apikey': $env.SUPABASE_SERVICE_KEY,\n    'Authorization': `Bearer ${$env.SUPABASE_SERVICE_KEY}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'resolution=merge-duplicates,return=representation'\n  },\n  body: JSON.stringify({\n    phone: $json.phone,\n    name: $json.contact_name\n  })\n});\n\nconst contactId = contactResult?.[0]?.id;\n\nreturn [{\n  json: {\n    ...$json,\n    contact_id: contactId\n  }\n}];"
+        "functionCode": "// Check for duplicate message (idempotency)\nconst msgId = $json.whatsapp_msg_id;\n\n// Upsert contact\nconst contactResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: \"https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/contacts?on_conflict=phone\",\n  headers: {\n    'apikey': \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\",\n    'Authorization': \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\",\n    'Content-Type': 'application/json',\n    'Prefer': 'resolution=merge-duplicates,return=representation'\n  },\n  body: JSON.stringify({\n    phone: $json.phone,\n    name: $json.contact_name\n  })\n});\n\nconst contactId = contactResult?.[0]?.id;\n\nreturn [{\n  json: {\n    ...$json,\n    contact_id: contactId\n  }\n}];"
       },
       "id": "node-upsert-contact",
       "name": "Upsert Contact",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
-      "position": [920, 200]
+      "position": [1340, 320]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/messages",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Content-Type", "value": "application/json" },
             { "name": "Prefer", "value": "return=representation" }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "channel_id", "value": "={{ $env.META_CHANNEL_ID }}" },
+            { "name": "channel_id", "value": "4886443e-4996-4d2a-83e1-d96f503e1a28" },
             { "name": "contact_id", "value": "={{ $json.contact_id }}" },
             { "name": "direction", "value": "in" },
             { "name": "content", "value": "={{ $json.content }}" },
@@ -89,22 +140,24 @@
       "name": "Insert Message to Supabase",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [1160, 200]
+      "position": [1580, 320]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/webhook_logs",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/webhook_logs",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" }
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "channel_id", "value": "={{ $env.META_CHANNEL_ID }}" },
+            { "name": "channel_id", "value": "4886443e-4996-4d2a-83e1-d96f503e1a28" },
             { "name": "event_type", "value": "message.received" },
             { "name": "source", "value": "meta" },
             { "name": "status", "value": "processed" }
@@ -115,22 +168,24 @@
       "name": "Log Webhook Event",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [1400, 200]
+      "position": [1820, 320]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/failed_messages",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/failed_messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" }
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "channel_id", "value": "={{ $env.META_CHANNEL_ID }}" },
+            { "name": "channel_id", "value": "4886443e-4996-4d2a-83e1-d96f503e1a28" },
             { "name": "payload", "value": "={{ JSON.stringify($json) }}" },
             { "name": "error_message", "value": "={{ $json.error?.message || 'Unknown error' }}" }
           ]
@@ -140,27 +195,94 @@
       "name": "Dead Letter Queue",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [1160, 440]
+      "position": [1580, 560]
     }
   ],
   "connections": {
     "Meta Webhook Trigger": {
-      "main": [[{ "node": "Parse Meta Payload", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Is Verification?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Verification?": {
+      "main": [
+        [
+          {
+            "node": "Respond with Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Instant Response for POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instant Response for POST": {
+      "main": [
+        [
+          {
+            "node": "Parse Meta Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse Meta Payload": {
-      "main": [[{ "node": "Has Message?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Has Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Has Message?": {
       "main": [
-        [{ "node": "Upsert Contact", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     },
     "Upsert Contact": {
-      "main": [[{ "node": "Insert Message to Supabase", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Insert Message to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Insert Message to Supabase": {
-      "main": [[{ "node": "Log Webhook Event", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Log Webhook Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {

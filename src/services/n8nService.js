@@ -7,7 +7,7 @@ class N8nService {
       return { success: false, reason: 'VITE_N8N_WEBHOOK_URL not configured' };
     }
 
-    const response = await fetch(`${N8N_URL}/webhook/outbound`, {
+    const response = await fetch(`${N8N_URL}/webhook/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

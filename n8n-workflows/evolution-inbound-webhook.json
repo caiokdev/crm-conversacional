@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// Parse Evolution API webhook payload\nconst body = $input.first().json.body || $input.first().json;\nconst event = body.event;\n\n// Handle different Evolution events\nif (event === 'messages.upsert') {\n  const msg = body.data;\n  const key = msg.key;\n  const isFromMe = key.fromMe;\n  \n  // Skip outgoing messages (we already logged them)\n  if (isFromMe) {\n    return [{ json: { skip: true, reason: 'Outgoing message from this device' } }];\n  }\n\n  const phone = key.remoteJid?.replace('@s.whatsapp.net', '') || '';\n  const pushName = msg.pushName || phone;\n  \n  let content = '';\n  let contentType = 'text';\n  let mediaUrl = null;\n  \n  if (msg.message?.conversation) {\n    content = msg.message.conversation;\n  } else if (msg.message?.extendedTextMessage?.text) {\n    content = msg.message.extendedTextMessage.text;\n  } else if (msg.message?.imageMessage) {\n    content = msg.message.imageMessage.caption || '[Imagem]';\n    contentType = 'image';\n    mediaUrl = msg.message.imageMessage.url;\n  } else if (msg.message?.audioMessage) {\n    content = '[Áudio]';\n    contentType = 'audio';\n    mediaUrl = msg.message.audioMessage.url;\n  } else if (msg.message?.videoMessage) {\n    content = msg.message.videoMessage.caption || '[Vídeo]';\n    contentType = 'video';\n    mediaUrl = msg.message.videoMessage.url;\n  } else if (msg.message?.documentMessage) {\n    content = msg.message.documentMessage.fileName || '[Documento]';\n    contentType = 'document';\n    mediaUrl = msg.message.documentMessage.url;\n  } else if (msg.message?.stickerMessage) {\n    content = '[Sticker]';\n    contentType = 'sticker';\n  } else {\n    content = '[Mensagem não suportada]';\n  }\n\n  return [{\n    json: {\n      event_type: 'message.received',\n      whatsapp_msg_id: key.id,\n      phone: phone,\n      contact_name: pushName,\n      direction: 'in',\n      content: content,\n      content_type: contentType,\n      media_url: mediaUrl,\n      timestamp: new Date(msg.messageTimestamp * 1000).toISOString(),\n      instance: body.instance,\n      raw_payload: body\n    }\n  }];\n\n} else if (event === 'connection.update') {\n  // Session status change (connected, disconnected, expired)\n  const state = body.data?.state;\n  return [{\n    json: {\n      event_type: 'session.status',\n      instance: body.instance,\n      status: state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : 'expired',\n      skip_message: true,\n      raw_payload: body\n    }\n  }];\n\n} else if (event === 'qrcode.updated') {\n  return [{\n    json: {\n      event_type: 'qrcode.updated',\n      instance: body.instance,\n      qrcode: body.data?.qrcode,\n      skip_message: true,\n      raw_payload: body\n    }\n  }];\n\n} else {\n  return [{ json: { skip: true, reason: `Unhandled event: ${event}` } }];\n}"
+        "functionCode": "// Parse Evolution API webhook payload\nconst body = $input.first().json.body || $input.first().json;\nconst event = body.event;\n\n// Handle different Evolution events\nif (event === 'messages.upsert') {\n  const msg = body.data;\n  const key = msg.key;\n  const isFromMe = key.fromMe;\n  \n  const phone = key.remoteJid?.split('@')[0]?.split(':')[0] || '';\n  const pushName = msg.pushName || phone;\n  \n  let content = '';\n  let contentType = 'text';\n  let mediaUrl = null;\n  \n  if (msg.message?.conversation) {\n    content = msg.message.conversation;\n  } else if (msg.message?.extendedTextMessage?.text) {\n    content = msg.message.extendedTextMessage.text;\n  } else if (msg.message?.imageMessage) {\n    content = msg.message.imageMessage.caption || '[Imagem]';\n    contentType = 'image';\n    mediaUrl = msg.message.imageMessage.url;\n  } else if (msg.message?.audioMessage) {\n    content = '[Áudio]';\n    contentType = 'audio';\n    mediaUrl = msg.message.audioMessage.url;\n  } else if (msg.message?.videoMessage) {\n    content = msg.message.videoMessage.caption || '[Vídeo]';\n    contentType = 'video';\n    mediaUrl = msg.message.videoMessage.url;\n  } else if (msg.message?.documentMessage) {\n    content = msg.message.documentMessage.fileName || '[Documento]';\n    contentType = 'document';\n    mediaUrl = msg.message.documentMessage.url;\n  } else if (msg.message?.stickerMessage) {\n    content = '[Sticker]';\n    contentType = 'sticker';\n  } else {\n    content = '[Mensagem não suportada]';\n  }\n\n  return [{    json: {\n      event_type: 'message.received',\n      whatsapp_msg_id: key.id,\n      phone: phone,\n      contact_name: pushName,\n      direction: isFromMe ? 'out' : 'in',\n      content: content,\n      content_type: contentType,\n      media_url: mediaUrl,\n      timestamp: new Date(msg.messageTimestamp * 1000).toISOString(),\n      instance: body.instance,\n      raw_payload: body\n    }  }];\n\n} else if (event === 'connection.update') {\n  // Session status change (connected, disconnected, expired)\n  const state = body.data?.state;\n  return [{\n    json: {\n      event_type: 'session.status',\n      instance: body.instance,\n      status: state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : 'expired',\n      skip_message: true,\n      raw_payload: body\n    }\n  }];\n\n} else if (event === 'qrcode.updated') {\n  return [{\n    json: {\n      event_type: 'qrcode.updated',\n      instance: body.instance,\n      qrcode: body.data?.qrcode,\n      skip_message: true,\n      raw_payload: body\n    }\n  }];\n\n} else {\n  return [{ json: { skip: true, reason: `Unhandled event: ${event}` } }];\n}"
       },
       "id": "node-parse-evo",
       "name": "Parse Evolution Payload",
@@ -51,7 +51,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// Upsert contact in Supabase\nconst contactResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: `${$env.SUPABASE_URL}/rest/v1/contacts`,\n  headers: {\n    'apikey': $env.SUPABASE_SERVICE_KEY,\n    'Authorization': `Bearer ${$env.SUPABASE_SERVICE_KEY}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'resolution=merge-duplicates,return=representation'\n  },\n  body: JSON.stringify({\n    phone: $json.phone,\n    name: $json.contact_name\n  })\n});\n\nconst contactId = contactResult?.[0]?.id;\n\nreturn [{ json: { ...$json, contact_id: contactId } }];"
+        "functionCode": "// Safely upsert/create contact to avoid agent name overwriting client\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\nconst phone = $json.phone;\nconst contactName = $json.contact_name;\nconst direction = $json.direction;\n\nconst bodyData = { phone };\n// Only upsert name if the message is inbound from the client (direction === 'in')\nif (direction === 'in' && contactName) {\n  bodyData.name = contactName;\n}\n\nconst contactResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: `${supabaseUrl}/rest/v1/contacts?on_conflict=phone`,\n  headers: {\n    'apikey': serviceKey,\n    'Authorization': `Bearer ${serviceKey}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'resolution=merge-duplicates,return=representation'\n  },\n  body: JSON.stringify(bodyData)\n});\n\nconst contactId = contactResult?.[0]?.id;\nreturn [{ json: { ...$json, contact_id: contactId } }];"
       },
       "id": "node-upsert-contact-evo",
       "name": "Upsert Contact",
@@ -61,53 +61,23 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/messages",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "Prefer", "value": "return=representation" }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            { "name": "channel_id", "value": "={{ $env.EVOLUTION_CHANNEL_ID }}" },
-            { "name": "contact_id", "value": "={{ $json.contact_id }}" },
-            { "name": "direction", "value": "in" },
-            { "name": "content", "value": "={{ $json.content }}" },
-            { "name": "content_type", "value": "={{ $json.content_type }}" },
-            { "name": "media_url", "value": "={{ $json.media_url }}" },
-            { "name": "whatsapp_msg_id", "value": "={{ $json.whatsapp_msg_id }}" },
-            { "name": "timestamp", "value": "={{ $json.timestamp }}" }
-          ]
-        },
-        "options": {
-          "retry": {
-            "maxRetries": 5,
-            "retryInterval": 2000,
-            "retryIntervalMultiplier": 2
-          }
-        }
+        "functionCode": "// Smart Upsert/Insert message to handle mobile sync & idempotency\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\nconst channelId = \"50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed\";\nconst contactId = $json.contact_id;\nconst whatsappMsgId = $json.whatsapp_msg_id;\nconst content = $json.content;\nconst contentType = $json.content_type;\nconst mediaUrl = $json.media_url;\nconst direction = $json.direction; // 'in' or 'out'\nconst timestamp = $json.timestamp;\n\nif (direction === 'out') {\n  // Check if CRM already logged this outgoing message within the last 30s\n  const thirtySecsAgo = new Date(Date.now() - 30000).toISOString();\n  \n  // Search for the most recent outbound message for this contact without an ID in the last 30s\n  const searchUrl = `${supabaseUrl}/rest/v1/messages?contact_id=eq.${contactId}&direction=eq.out&whatsapp_msg_id=is.null&created_at=gte.${thirtySecsAgo}&order=created_at.desc&limit=1`;\n  \n  try {\n    const existingMsgs = await $helpers.httpRequest({\n      method: 'GET',\n      url: searchUrl,\n      headers: {\n        'apikey': serviceKey,\n        'Authorization': `Bearer ${serviceKey}`\n      }\n    });\n    \n    if (existingMsgs && existingMsgs.length > 0) {\n      // Outgoing message found! Link it to the real WhatsApp ID\n      const match = existingMsgs[0];\n      await $helpers.httpRequest({\n        method: 'PATCH',\n        url: `${supabaseUrl}/rest/v1/messages?id=eq.${match.id}`,\n        headers: {\n          'apikey': serviceKey,\n          'Authorization': `Bearer ${serviceKey}`,\n          'Content-Type': 'application/json'\n        },\n        body: JSON.stringify({ \n          whatsapp_msg_id: whatsappMsgId,\n          status: 'sent'\n        })\n      });\n      return [{ json: { ...$json, message_id: match.id, action: 'updated' } }];\n    }\n  } catch (e) {\n    console.error('Error checking for duplicate outgoing message:', e);\n  }\n} else {\n  // For incoming messages, check if we already have this whatsapp_msg_id to prevent duplicates\n  if (whatsappMsgId) {\n    try {\n      const existingMsgs = await $helpers.httpRequest({\n        method: 'GET',\n        url: `${supabaseUrl}/rest/v1/messages?whatsapp_msg_id=eq.${whatsappMsgId}&select=id`,\n        headers: {\n          'apikey': serviceKey,\n          'Authorization': `Bearer ${serviceKey}`\n        }\n      });\n      if (existingMsgs && existingMsgs.length > 0) {\n        return [{ json: { ...$json, message_id: existingMsgs[0].id, action: 'skipped_duplicate' } }];\n      }\n    } catch (e) {\n      console.error('Error checking for duplicate incoming message:', e);\n    }\n  }\n}\n\n// Insert a fresh row for client inbound or mobile-initiated outbound\nconst insertResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: `${supabaseUrl}/rest/v1/messages`,\n  headers: {\n    'apikey': serviceKey,\n    'Authorization': `Bearer ${serviceKey}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'return=representation'\n  },\n  body: JSON.stringify({\n    channel_id: channelId,\n    contact_id: contactId,\n    direction: direction,\n    content: content,\n    content_type: contentType,\n    media_url: mediaUrl,\n    whatsapp_msg_id: whatsappMsgId,\n    timestamp: timestamp,\n    status: direction === 'out' ? 'sent' : undefined\n  })\n});\n\nreturn [{ json: { ...$json, message_id: insertResult?.[0]?.id, action: 'inserted' } }];"
       },
       "id": "node-insert-msg-evo",
       "name": "Insert Message to Supabase",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
       "position": [1200, 160]
     },
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/channels?instance=eq.{{ $json.instance }}",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/channels?instance=eq.{{ $json.instance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
@@ -128,19 +98,19 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/webhook_logs",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/webhook_logs",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" },
-            { "name": "Authorization", "value": "Bearer {{ $env.SUPABASE_SERVICE_KEY }}" },
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "channel_id", "value": "={{ $env.EVOLUTION_CHANNEL_ID }}" },
+            { "name": "channel_id", "value": "50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed" },
             { "name": "event_type", "value": "={{ $json.event_type }}" },
             { "name": "source", "value": "evolution" },
             { "name": "status", "value": "processed" }
@@ -156,17 +126,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/failed_messages",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/failed_messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_KEY }}" }
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8" }
           ]
         },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "channel_id", "value": "={{ $env.EVOLUTION_CHANNEL_ID }}" },
+            { "name": "channel_id", "value": "50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed" },
             { "name": "payload", "value": "={{ JSON.stringify($json) }}" },
             { "name": "error_message", "value": "={{ $json.error?.message || 'Unknown error' }}" }
           ]
