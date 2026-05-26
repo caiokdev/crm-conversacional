@@ -1,0 +1,690 @@
+{
+  "updatedAt": "2026-05-26T17:15:13.130Z",
+  "createdAt": "2026-05-21T22:06:18.094Z",
+  "id": "m5wmXXTYAqLiRM9c",
+  "name": "WhatsApp Evolution API – Inbound Webhook",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/evolution",
+        "options": {}
+      },
+      "id": "f79aec30-2f4a-4a5f-be76-a73d28679181",
+      "name": "Evolution Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        1168
+      ],
+      "webhookId": "b5b8648f-81c0-4d91-9958-08dd5d032d12"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Evolution API webhook payload\nconst body = $input.first().json.body || $input.first().json;\nconst event = body.event;\n\n// Handle different Evolution events\nif (event === 'messages.upsert') {\n  const msg = body.data;\n  const key = msg.key;\n  const isFromMe = key.fromMe;\n  \n  const phone = key.remoteJid?.split('@')[0]?.split(':')[0] || '';\n  const pushName = msg.pushName || phone;\n  \n  let content = '';\n  let contentType = 'text';\n  let mediaUrl = null;\n  \n  if (msg.message?.conversation) {\n    content = msg.message.conversation;\n  } else if (msg.message?.extendedTextMessage?.text) {\n    content = msg.message.extendedTextMessage.text;\n  } else if (msg.message?.imageMessage) {\n    content = msg.message.imageMessage.caption || '[Imagem]';\n    contentType = 'image';\n    mediaUrl = msg.message.imageMessage.url;\n  } else if (msg.message?.audioMessage) {\n    content = '[Áudio]';\n    contentType = 'audio';\n    mediaUrl = msg.message.audioMessage.url;\n  } else if (msg.message?.videoMessage) {\n    content = msg.message.videoMessage.caption || '[Vídeo]';\n    contentType = 'video';\n    mediaUrl = msg.message.videoMessage.url;\n  } else if (msg.message?.documentMessage) {\n    content = msg.message.documentMessage.fileName || '[Documento]';\n    contentType = 'document';\n    mediaUrl = msg.message.documentMessage.url;\n  } else if (msg.message?.stickerMessage) {\n    content = '[Sticker]';\n    contentType = 'sticker';\n  } else {\n    content = '[Mensagem não suportada]';\n  }\n\n  return [{    json: {\n      event_type: 'message.received',\n      whatsapp_msg_id: key.id,\n      phone: phone,\n      contact_name: pushName,\n      direction: isFromMe ? 'out' : 'in',\n      content: content,\n      content_type: contentType,\n      media_url: mediaUrl,\n      timestamp: new Date(msg.messageTimestamp * 1000).toISOString(),\n      instance: body.instance,\n      raw_payload: body\n    }  }];\n\n} else if (event === 'connection.update') {\n  // Session status change (connected, disconnected, expired)\n  const state = body.data?.state;\n  return [{\n    json: {\n      event_type: 'session.status',\n      instance: body.instance,\n      status: state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : 'expired',\n      skip_message: true,\n      raw_payload: body\n    }\n  }];\n\n} else if (event === 'qrcode.updated') {\n  return [{\n    json: {\n      event_type: 'qrcode.updated',\n      instance: body.instance,\n      qrcode: body.data?.qrcode,\n      skip_message: true,\n      raw_payload: body\n    }\n  }];\n\n} else {\n  return [{ json: { skip: true, reason: `Unhandled event: ${event}` } }];\n}"
+      },
+      "id": "588f5a8e-3d98-4ff8-b3d1-562a62415367",
+      "name": "Parse Evolution Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.event_type }}",
+              "operation": "equals",
+              "value2": "message.received"
+            }
+          ]
+        }
+      },
+      "id": "91b9cbe2-6116-42e3-a45e-82eee5ae48f5",
+      "name": "Is Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.event_type }}",
+              "operation": "equals",
+              "value2": "session.status"
+            }
+          ]
+        }
+      },
+      "id": "a123e004-be5b-4d3b-9eae-ecbf28cc997b",
+      "name": "Is Session Update?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        1368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Safely upsert/create contact to avoid agent name overwriting client\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnUxOWtoa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\n// Correction to match literal key: ibyterftfrqgkhktkaeg\nconst serviceKeyReal = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\n\nconst phone = $json.phone;\nconst contactName = $json.contact_name;\nconst direction = $json.direction;\n\nconst bodyData = { phone };\n// Only upsert name if the message is inbound from the client (direction === 'in')\nif (direction === 'in' && contactName) {\n  bodyData.name = contactName;\n}\n\nconst contactResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: `${supabaseUrl}/rest/v1/contacts?on_conflict=phone`,\n  headers: {\n    'apikey': serviceKeyReal,\n    'Authorization': `Bearer ${serviceKeyReal}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'resolution=merge-duplicates,return=representation'\n  },\n  body: JSON.stringify(bodyData)\n});\n\nconst contactId = contactResult?.[0]?.id;\nreturn [{ json: { ...$json, contact_id: contactId } }];"
+      },
+      "id": "b4cf8e34-093a-419f-a13a-0a01ebb1c654",
+      "name": "Upsert Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Smart Upsert/Insert message to handle mobile sync & idempotency\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\nconst channelId = \"50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed\";\nconst contactId = $json.contact_id;\nconst whatsappMsgId = $json.whatsapp_msg_id;\nconst content = $json.content;\nconst contentType = $json.content_type;\nconst mediaUrl = $json.media_url;\nconst direction = $json.direction; // 'in' or 'out'\nconst timestamp = $json.timestamp;\n\nif (direction === 'out') {\n  // Check if CRM already logged this outgoing message within the last 30s\n  const thirtySecsAgo = new Date(Date.now() - 30000).toISOString();\n  \n  // Search for the most recent outbound message for this contact without an ID in the last 30s\n  const searchUrl = `${supabaseUrl}/rest/v1/messages?contact_id=eq.${contactId}&direction=eq.out&whatsapp_msg_id=is.null&created_at=gte.${thirtySecsAgo}&order=created_at.desc&limit=1`;\n  \n  try {\n    const existingMsgs = await $helpers.httpRequest({\n      method: 'GET',\n      url: searchUrl,\n      headers: {\n        'apikey': serviceKey,\n        'Authorization': `Bearer ${serviceKey}`\n      }\n    });\n    \n    if (existingMsgs && existingMsgs.length > 0) {\n      // Outgoing message found! Link it to the real WhatsApp ID\n      const match = existingMsgs[0];\n      await $helpers.httpRequest({\n        method: 'PATCH',\n        url: `${supabaseUrl}/rest/v1/messages?id=eq.${match.id}`,\n        headers: {\n          'apikey': serviceKey,\n          'Authorization': `Bearer ${serviceKey}`,\n          'Content-Type': 'application/json'\n        },\n        body: JSON.stringify({ \n          whatsapp_msg_id: whatsappMsgId,\n          status: 'sent'\n        })\n      });\n      return [{ json: { ...$json, message_id: match.id, action: 'updated' } }];\n    }\n  } catch (e) {\n    console.error('Error checking for duplicate outgoing message:', e);\n  }\n} else {\n  // For incoming messages, check if we already have this whatsapp_msg_id to prevent duplicates\n  if (whatsappMsgId) {\n    try {\n      const existingMsgs = await $helpers.httpRequest({\n        method: 'GET',\n        url: `${supabaseUrl}/rest/v1/messages?whatsapp_msg_id=eq.${whatsappMsgId}&select=id`,\n        headers: {\n          'apikey': serviceKey,\n          'Authorization': `Bearer ${serviceKey}`\n        }\n      });\n      if (existingMsgs && existingMsgs.length > 0) {\n        return [{ json: { ...$json, message_id: existingMsgs[0].id, action: 'skipped_duplicate' } }];\n      }\n    } catch (e) {\n      console.error('Error checking for duplicate incoming message:', e);\n    }\n  }\n}\n\n// Insert a fresh row for client inbound or mobile-initiated outbound\nconst insertResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: `${supabaseUrl}/rest/v1/messages`,\n  headers: {\n    'apikey': serviceKey,\n    'Authorization': `Bearer ${serviceKey}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'return=representation'\n  },\n  body: JSON.stringify({\n    channel_id: channelId,\n    contact_id: contactId,\n    direction: direction,\n    content: content,\n    content_type: contentType,\n    media_url: mediaUrl,\n    whatsapp_msg_id: whatsappMsgId,\n    timestamp: timestamp,\n    status: direction === 'out' ? 'sent' : undefined\n  })\n});\n\nreturn [{ json: { ...$json, message_id: insertResult?.[0]?.id, action: 'inserted' } }];"
+      },
+      "id": "617b8bc9-e5b8-4846-8b9a-447c34e11687",
+      "name": "Insert Message to Supabase",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/channels?instance=eq.{{ $json.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "={{ $json.status }}"
+            },
+            {
+              "name": "last_seen",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6421e004-be5b-4d3b-9eae-ecbf28cc997a",
+      "name": "Update Channel Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        208,
+        1368
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/webhook_logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel_id",
+              "value": "50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed"
+            },
+            {
+              "name": "event_type",
+              "value": "={{ $json.event_type }}"
+            },
+            {
+              "name": "source",
+              "value": "evolution"
+            },
+            {
+              "name": "status",
+              "value": "processed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d10f51fa-a406-4955-8b86-f20527bb1822",
+      "name": "Log Webhook Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        688,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/failed_messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel_id",
+              "value": "50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed"
+            },
+            {
+              "name": "payload",
+              "value": "={{ JSON.stringify($json) }}"
+            },
+            {
+              "name": "error_message",
+              "value": "={{ $json.error?.message || 'Unknown error' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d721f079-b5bc-4f2a-afb3-2abde8f6f4e9",
+      "name": "Dead Letter Queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        448,
+        1344
+      ]
+    }
+  ],
+  "connections": {
+    "Evolution Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Evolution Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Evolution Payload": {
+      "main": [
+        [
+          {
+            "node": "Is Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Message?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Session Update?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Session Update?": {
+      "main": [
+        [
+          {
+            "node": "Update Channel Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Contact": {
+      "main": [
+        [
+          {
+            "node": "Insert Message to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Message to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Log Webhook Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "1c8f27e7-05e0-4427-bfed-e15fdd8ce59b",
+  "activeVersionId": "1c8f27e7-05e0-4427-bfed-e15fdd8ce59b",
+  "versionCounter": 135,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-21T22:06:18.098Z",
+      "createdAt": "2026-05-21T22:06:18.098Z",
+      "role": "workflow:owner",
+      "workflowId": "m5wmXXTYAqLiRM9c",
+      "projectId": "fIrNrWww8GxwH38w",
+      "project": {
+        "updatedAt": "2025-06-02T17:48:01.378Z",
+        "createdAt": "2025-06-02T17:42:54.968Z",
+        "id": "fIrNrWww8GxwH38w",
+        "name": "Wilker Amaral <agenciawiks@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "27f66831-b616-40da-b6da-90d3ea12a46b"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-26T17:15:13.133Z",
+    "createdAt": "2026-05-26T17:15:13.133Z",
+    "versionId": "1c8f27e7-05e0-4427-bfed-e15fdd8ce59b",
+    "workflowId": "m5wmXXTYAqLiRM9c",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "webhook/evolution",
+          "options": {}
+        },
+        "id": "f79aec30-2f4a-4a5f-be76-a73d28679181",
+        "name": "Evolution Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -512,
+          1168
+        ],
+        "webhookId": "b5b8648f-81c0-4d91-9958-08dd5d032d12"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Parse Evolution API webhook payload\nconst body = $input.first().json.body || $input.first().json;\nconst event = body.event;\n\n// Handle different Evolution events\nif (event === 'messages.upsert') {\n  const msg = body.data;\n  const key = msg.key;\n  const isFromMe = key.fromMe;\n  \n  const phone = key.remoteJid?.split('@')[0]?.split(':')[0] || '';\n  const pushName = msg.pushName || phone;\n  \n  let content = '';\n  let contentType = 'text';\n  let mediaUrl = null;\n  \n  if (msg.message?.conversation) {\n    content = msg.message.conversation;\n  } else if (msg.message?.extendedTextMessage?.text) {\n    content = msg.message.extendedTextMessage.text;\n  } else if (msg.message?.imageMessage) {\n    content = msg.message.imageMessage.caption || '[Imagem]';\n    contentType = 'image';\n    mediaUrl = msg.message.imageMessage.url;\n  } else if (msg.message?.audioMessage) {\n    content = '[Áudio]';\n    contentType = 'audio';\n    mediaUrl = msg.message.audioMessage.url;\n  } else if (msg.message?.videoMessage) {\n    content = msg.message.videoMessage.caption || '[Vídeo]';\n    contentType = 'video';\n    mediaUrl = msg.message.videoMessage.url;\n  } else if (msg.message?.documentMessage) {\n    content = msg.message.documentMessage.fileName || '[Documento]';\n    contentType = 'document';\n    mediaUrl = msg.message.documentMessage.url;\n  } else if (msg.message?.stickerMessage) {\n    content = '[Sticker]';\n    contentType = 'sticker';\n  } else {\n    content = '[Mensagem não suportada]';\n  }\n\n  return [{    json: {\n      event_type: 'message.received',\n      whatsapp_msg_id: key.id,\n      phone: phone,\n      contact_name: pushName,\n      direction: isFromMe ? 'out' : 'in',\n      content: content,\n      content_type: contentType,\n      media_url: mediaUrl,\n      timestamp: new Date(msg.messageTimestamp * 1000).toISOString(),\n      instance: body.instance,\n      raw_payload: body\n    }  }];\n\n} else if (event === 'connection.update') {\n  // Session status change (connected, disconnected, expired)\n  const state = body.data?.state;\n  return [{\n    json: {\n      event_type: 'session.status',\n      instance: body.instance,\n      status: state === 'open' ? 'connected' : state === 'close' ? 'disconnected' : 'expired',\n      skip_message: true,\n      raw_payload: body\n    }\n  }];\n\n} else if (event === 'qrcode.updated') {\n  return [{\n    json: {\n      event_type: 'qrcode.updated',\n      instance: body.instance,\n      qrcode: body.data?.qrcode,\n      skip_message: true,\n      raw_payload: body\n    }\n  }];\n\n} else {\n  return [{ json: { skip: true, reason: `Unhandled event: ${event}` } }];\n}"
+        },
+        "id": "588f5a8e-3d98-4ff8-b3d1-562a62415367",
+        "name": "Parse Evolution Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -272,
+          1168
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.event_type }}",
+                "operation": "equals",
+                "value2": "message.received"
+              }
+            ]
+          }
+        },
+        "id": "91b9cbe2-6116-42e3-a45e-82eee5ae48f5",
+        "name": "Is Message?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          -32,
+          1168
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.event_type }}",
+                "operation": "equals",
+                "value2": "session.status"
+              }
+            ]
+          }
+        },
+        "id": "a123e004-be5b-4d3b-9eae-ecbf28cc997b",
+        "name": "Is Session Update?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          -32,
+          1368
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Safely upsert/create contact to avoid agent name overwriting client\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnUxOWtoa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\n// Correction to match literal key: ibyterftfrqgkhktkaeg\nconst serviceKeyReal = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\n\nconst phone = $json.phone;\nconst contactName = $json.contact_name;\nconst direction = $json.direction;\n\nconst bodyData = { phone };\n// Only upsert name if the message is inbound from the client (direction === 'in')\nif (direction === 'in' && contactName) {\n  bodyData.name = contactName;\n}\n\nconst contactResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: `${supabaseUrl}/rest/v1/contacts?on_conflict=phone`,\n  headers: {\n    'apikey': serviceKeyReal,\n    'Authorization': `Bearer ${serviceKeyReal}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'resolution=merge-duplicates,return=representation'\n  },\n  body: JSON.stringify(bodyData)\n});\n\nconst contactId = contactResult?.[0]?.id;\nreturn [{ json: { ...$json, contact_id: contactId } }];"
+        },
+        "id": "b4cf8e34-093a-419f-a13a-0a01ebb1c654",
+        "name": "Upsert Contact",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          208,
+          1024
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Smart Upsert/Insert message to handle mobile sync & idempotency\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\nconst channelId = \"50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed\";\nconst contactId = $json.contact_id;\nconst whatsappMsgId = $json.whatsapp_msg_id;\nconst content = $json.content;\nconst contentType = $json.content_type;\nconst mediaUrl = $json.media_url;\nconst direction = $json.direction; // 'in' or 'out'\nconst timestamp = $json.timestamp;\n\nif (direction === 'out') {\n  // Check if CRM already logged this outgoing message within the last 30s\n  const thirtySecsAgo = new Date(Date.now() - 30000).toISOString();\n  \n  // Search for the most recent outbound message for this contact without an ID in the last 30s\n  const searchUrl = `${supabaseUrl}/rest/v1/messages?contact_id=eq.${contactId}&direction=eq.out&whatsapp_msg_id=is.null&created_at=gte.${thirtySecsAgo}&order=created_at.desc&limit=1`;\n  \n  try {\n    const existingMsgs = await $helpers.httpRequest({\n      method: 'GET',\n      url: searchUrl,\n      headers: {\n        'apikey': serviceKey,\n        'Authorization': `Bearer ${serviceKey}`\n      }\n    });\n    \n    if (existingMsgs && existingMsgs.length > 0) {\n      // Outgoing message found! Link it to the real WhatsApp ID\n      const match = existingMsgs[0];\n      await $helpers.httpRequest({\n        method: 'PATCH',\n        url: `${supabaseUrl}/rest/v1/messages?id=eq.${match.id}`,\n        headers: {\n          'apikey': serviceKey,\n          'Authorization': `Bearer ${serviceKey}`,\n          'Content-Type': 'application/json'\n        },\n        body: JSON.stringify({ \n          whatsapp_msg_id: whatsappMsgId,\n          status: 'sent'\n        })\n      });\n      return [{ json: { ...$json, message_id: match.id, action: 'updated' } }];\n    }\n  } catch (e) {\n    console.error('Error checking for duplicate outgoing message:', e);\n  }\n} else {\n  // For incoming messages, check if we already have this whatsapp_msg_id to prevent duplicates\n  if (whatsappMsgId) {\n    try {\n      const existingMsgs = await $helpers.httpRequest({\n        method: 'GET',\n        url: `${supabaseUrl}/rest/v1/messages?whatsapp_msg_id=eq.${whatsappMsgId}&select=id`,\n        headers: {\n          'apikey': serviceKey,\n          'Authorization': `Bearer ${serviceKey}`\n        }\n      });\n      if (existingMsgs && existingMsgs.length > 0) {\n        return [{ json: { ...$json, message_id: existingMsgs[0].id, action: 'skipped_duplicate' } }];\n      }\n    } catch (e) {\n      console.error('Error checking for duplicate incoming message:', e);\n    }\n  }\n}\n\n// Insert a fresh row for client inbound or mobile-initiated outbound\nconst insertResult = await $helpers.httpRequest({\n  method: 'POST',\n  url: `${supabaseUrl}/rest/v1/messages`,\n  headers: {\n    'apikey': serviceKey,\n    'Authorization': `Bearer ${serviceKey}`,\n    'Content-Type': 'application/json',\n    'Prefer': 'return=representation'\n  },\n  body: JSON.stringify({\n    channel_id: channelId,\n    contact_id: contactId,\n    direction: direction,\n    content: content,\n    content_type: contentType,\n    media_url: mediaUrl,\n    whatsapp_msg_id: whatsappMsgId,\n    timestamp: timestamp,\n    status: direction === 'out' ? 'sent' : undefined\n  })\n});\n\nreturn [{ json: { ...$json, message_id: insertResult?.[0]?.id, action: 'inserted' } }];"
+        },
+        "id": "617b8bc9-e5b8-4846-8b9a-447c34e11687",
+        "name": "Insert Message to Supabase",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          448,
+          1024
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/channels?instance=eq.{{ $json.instance }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "status",
+                "value": "={{ $json.status }}"
+              },
+              {
+                "name": "last_seen",
+                "value": "={{ new Date().toISOString() }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "6421e004-be5b-4d3b-9eae-ecbf28cc997a",
+        "name": "Update Channel Status",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 3,
+        "position": [
+          208,
+          1368
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/webhook_logs",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "channel_id",
+                "value": "50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed"
+              },
+              {
+                "name": "event_type",
+                "value": "={{ $json.event_type }}"
+              },
+              {
+                "name": "source",
+                "value": "evolution"
+              },
+              {
+                "name": "status",
+                "value": "processed"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "d10f51fa-a406-4955-8b86-f20527bb1822",
+        "name": "Log Webhook Event",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 3,
+        "position": [
+          688,
+          1024
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/failed_messages",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "channel_id",
+                "value": "50df1e49-8f4c-4f90-b3c5-e9b95e37d8ed"
+              },
+              {
+                "name": "payload",
+                "value": "={{ JSON.stringify($json) }}"
+              },
+              {
+                "name": "error_message",
+                "value": "={{ $json.error?.message || 'Unknown error' }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "d721f079-b5bc-4f2a-afb3-2abde8f6f4e9",
+        "name": "Dead Letter Queue",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 3,
+        "position": [
+          448,
+          1344
+        ]
+      }
+    ],
+    "connections": {
+      "Evolution Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Parse Evolution Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Evolution Payload": {
+        "main": [
+          [
+            {
+              "node": "Is Message?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Message?": {
+        "main": [
+          [
+            {
+              "node": "Upsert Contact",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Is Session Update?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Session Update?": {
+        "main": [
+          [
+            {
+              "node": "Update Channel Status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Contact": {
+        "main": [
+          [
+            {
+              "node": "Insert Message to Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Message to Supabase": {
+        "main": [
+          [
+            {
+              "node": "Log Webhook Event",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Wilker Amaral",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-26T17:15:13.258Z",
+        "id": 554,
+        "workflowId": "m5wmXXTYAqLiRM9c",
+        "versionId": "1c8f27e7-05e0-4427-bfed-e15fdd8ce59b",
+        "event": "activated",
+        "userId": "27f66831-b616-40da-b6da-90d3ea12a46b"
+      }
+    ]
+  }
+}

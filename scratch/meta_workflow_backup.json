@@ -1,0 +1,824 @@
+{
+  "updatedAt": "2026-05-26T17:03:32.503Z",
+  "createdAt": "2026-05-21T22:06:17.786Z",
+  "id": "88zOQbdJAT7DOaET",
+  "name": "WhatsApp Meta Official – Inbound Webhook",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "ALL",
+        "path": "webhook/meta",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1d6629ba-7d5d-4e0e-b942-c0d0b82fe845",
+      "name": "Meta Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        768,
+        448
+      ],
+      "webhookId": "2bd246d4-3826-4ee0-aebc-bc308788d76c"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.query?.['hub.mode'] }}",
+              "operation": "equals",
+              "value2": "subscribe"
+            }
+          ]
+        }
+      },
+      "id": "fac4aee3-9f18-4cf1-99b6-e553b7f9e5ac",
+      "name": "Is Verification?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        992,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query?.['hub.challenge'] || '' }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
+      },
+      "id": "62086aa8-fd60-419a-9465-8bc19aaeb222",
+      "name": "Respond with Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"ok\"\n}",
+        "options": {}
+      },
+      "id": "35c1a681-d0a7-47d1-993d-a8b757678c81",
+      "name": "Instant Response for POST",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        560
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "261d6387-b099-4a21-a289-76b8c758aaa8",
+      "name": "Parse Meta Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.skip }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "d9c2d088-ac0d-42ce-b58e-ab11dc919585",
+      "name": "Has Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        560
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "767892d0-6059-45ba-be6f-30f96025ca32",
+      "name": "Upsert Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1872,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel_id",
+              "value": "4886443e-4996-4d2a-83e1-d96f503e1a28"
+            },
+            {
+              "name": "contact_id",
+              "value": "={{ $json.contact_id }}"
+            },
+            {
+              "name": "direction",
+              "value": "in"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "content_type",
+              "value": "={{ $json.content_type }}"
+            },
+            {
+              "name": "media_url",
+              "value": "={{ $json.media_url }}"
+            },
+            {
+              "name": "whatsapp_msg_id",
+              "value": "={{ $json.whatsapp_msg_id }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $json.timestamp }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "768d3699-117b-4346-bfb1-5fd614054dbf",
+      "name": "Insert Message to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2112,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/webhook_logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel_id",
+              "value": "4886443e-4996-4d2a-83e1-d96f503e1a28"
+            },
+            {
+              "name": "event_type",
+              "value": "message.received"
+            },
+            {
+              "name": "source",
+              "value": "meta"
+            },
+            {
+              "name": "status",
+              "value": "processed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e682408c-9bf6-41f9-87a7-5436642d4ec5",
+      "name": "Log Webhook Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2352,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/failed_messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel_id",
+              "value": "4886443e-4996-4d2a-83e1-d96f503e1a28"
+            },
+            {
+              "name": "payload",
+              "value": "={{ JSON.stringify($json) }}"
+            },
+            {
+              "name": "error_message",
+              "value": "={{ $json.error?.message || 'Unknown error' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c2149d80-0a6f-480e-8b6c-f32e2b8f3fab",
+      "name": "Dead Letter Queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2112,
+        704
+      ]
+    }
+  ],
+  "connections": {
+    "Meta Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Is Verification?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Verification?": {
+      "main": [
+        [
+          {
+            "node": "Respond with Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Instant Response for POST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instant Response for POST": {
+      "main": [
+        [
+          {
+            "node": "Parse Meta Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Meta Payload": {
+      "main": [
+        [
+          {
+            "node": "Has Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Message?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Contact": {
+      "main": [
+        [
+          {
+            "node": "Insert Message to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Message to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Log Webhook Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "cbd23fbf-db1e-4153-9b88-3beaa7a249d7",
+  "activeVersionId": "cbd23fbf-db1e-4153-9b88-3beaa7a249d7",
+  "versionCounter": 115,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-21T22:06:17.794Z",
+      "createdAt": "2026-05-21T22:06:17.794Z",
+      "role": "workflow:owner",
+      "workflowId": "88zOQbdJAT7DOaET",
+      "projectId": "fIrNrWww8GxwH38w",
+      "project": {
+        "updatedAt": "2025-06-02T17:48:01.378Z",
+        "createdAt": "2025-06-02T17:42:54.968Z",
+        "id": "fIrNrWww8GxwH38w",
+        "name": "Wilker Amaral <agenciawiks@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "27f66831-b616-40da-b6da-90d3ea12a46b"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-26T17:03:36.000Z",
+    "createdAt": "2026-05-26T17:03:32.504Z",
+    "versionId": "cbd23fbf-db1e-4153-9b88-3beaa7a249d7",
+    "workflowId": "88zOQbdJAT7DOaET",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "ALL",
+          "path": "webhook/meta",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "1d6629ba-7d5d-4e0e-b942-c0d0b82fe845",
+        "name": "Meta Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          768,
+          448
+        ],
+        "webhookId": "2bd246d4-3826-4ee0-aebc-bc308788d76c"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "string": [
+              {
+                "value1": "={{ $json.query?.['hub.mode'] }}",
+                "operation": "equals",
+                "value2": "subscribe"
+              }
+            ]
+          }
+        },
+        "id": "fac4aee3-9f18-4cf1-99b6-e553b7f9e5ac",
+        "name": "Is Verification?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          992,
+          448
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "={{ $json.query?.['hub.challenge'] || '' }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Content-Type",
+                  "value": "text/plain"
+                }
+              ]
+            }
+          }
+        },
+        "id": "62086aa8-fd60-419a-9465-8bc19aaeb222",
+        "name": "Respond with Challenge",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          1200,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "{\n  \"status\": \"ok\"\n}",
+          "options": {}
+        },
+        "id": "35c1a681-d0a7-47d1-993d-a8b757678c81",
+        "name": "Instant Response for POST",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          1200,
+          560
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "261d6387-b099-4a21-a289-76b8c758aaa8",
+        "name": "Parse Meta Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          1424,
+          560
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "boolean": [
+              {
+                "value1": "={{ $json.skip }}",
+                "value2": true
+              }
+            ]
+          }
+        },
+        "id": "d9c2d088-ac0d-42ce-b58e-ab11dc919585",
+        "name": "Has Message?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 1,
+        "position": [
+          1648,
+          560
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "767892d0-6059-45ba-be6f-30f96025ca32",
+        "name": "Upsert Contact",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 1,
+        "position": [
+          1872,
+          464
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "channel_id",
+                "value": "4886443e-4996-4d2a-83e1-d96f503e1a28"
+              },
+              {
+                "name": "contact_id",
+                "value": "={{ $json.contact_id }}"
+              },
+              {
+                "name": "direction",
+                "value": "in"
+              },
+              {
+                "name": "content",
+                "value": "={{ $json.content }}"
+              },
+              {
+                "name": "content_type",
+                "value": "={{ $json.content_type }}"
+              },
+              {
+                "name": "media_url",
+                "value": "={{ $json.media_url }}"
+              },
+              {
+                "name": "whatsapp_msg_id",
+                "value": "={{ $json.whatsapp_msg_id }}"
+              },
+              {
+                "name": "timestamp",
+                "value": "={{ $json.timestamp }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "768d3699-117b-4346-bfb1-5fd614054dbf",
+        "name": "Insert Message to Supabase",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 3,
+        "position": [
+          2112,
+          464
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/webhook_logs",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "channel_id",
+                "value": "4886443e-4996-4d2a-83e1-d96f503e1a28"
+              },
+              {
+                "name": "event_type",
+                "value": "message.received"
+              },
+              {
+                "name": "source",
+                "value": "meta"
+              },
+              {
+                "name": "status",
+                "value": "processed"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "e682408c-9bf6-41f9-87a7-5436642d4ec5",
+        "name": "Log Webhook Event",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 3,
+        "position": [
+          2352,
+          464
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/failed_messages",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "channel_id",
+                "value": "4886443e-4996-4d2a-83e1-d96f503e1a28"
+              },
+              {
+                "name": "payload",
+                "value": "={{ JSON.stringify($json) }}"
+              },
+              {
+                "name": "error_message",
+                "value": "={{ $json.error?.message || 'Unknown error' }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "c2149d80-0a6f-480e-8b6c-f32e2b8f3fab",
+        "name": "Dead Letter Queue",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 3,
+        "position": [
+          2112,
+          704
+        ]
+      }
+    ],
+    "connections": {
+      "Meta Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Is Verification?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Verification?": {
+        "main": [
+          [
+            {
+              "node": "Respond with Challenge",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Instant Response for POST",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Instant Response for POST": {
+        "main": [
+          [
+            {
+              "node": "Parse Meta Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Meta Payload": {
+        "main": [
+          [
+            {
+              "node": "Has Message?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Message?": {
+        "main": [
+          [
+            {
+              "node": "Upsert Contact",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Contact": {
+        "main": [
+          [
+            {
+              "node": "Insert Message to Supabase",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Message to Supabase": {
+        "main": [
+          [
+            {
+              "node": "Log Webhook Event",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Wilker Amaral",
+    "name": "Version cbd23fbf",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-26T17:03:36.296Z",
+        "id": 548,
+        "workflowId": "88zOQbdJAT7DOaET",
+        "versionId": "cbd23fbf-db1e-4153-9b88-3beaa7a249d7",
+        "event": "activated",
+        "userId": "27f66831-b616-40da-b6da-90d3ea12a46b"
+      }
+    ]
+  }
+}

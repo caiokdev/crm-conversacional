@@ -1,0 +1,2035 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "",
+    "title": "standard public schema",
+    "version": "14.5"
+  },
+  "host": "ibyterftfrqgkhktkaeg.supabase.co:443",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json",
+    "application/vnd.pgrst.object+json;nulls=stripped",
+    "application/vnd.pgrst.object+json",
+    "text/csv"
+  ],
+  "produces": [
+    "application/json",
+    "application/vnd.pgrst.object+json;nulls=stripped",
+    "application/vnd.pgrst.object+json",
+    "text/csv"
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "produces": [
+          "application/openapi+json",
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "OpenAPI description (this document)",
+        "tags": [
+          "Introspection"
+        ]
+      }
+    },
+    "/atendimento_status": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.atendimento_status.telefone"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.atendimento_status.dono"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/atendimento_status"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "atendimento_status"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.atendimento_status"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "atendimento_status"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.atendimento_status.telefone"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.atendimento_status.dono"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "atendimento_status"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.atendimento_status.telefone"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.atendimento_status.dono"
+          },
+          {
+            "$ref": "#/parameters/body.atendimento_status"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "atendimento_status"
+        ]
+      }
+    },
+    "/agent_profiles": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/agent_profiles"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "agent_profiles"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.agent_profiles"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "agent_profiles"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "agent_profiles"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.role"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.agent_profiles.created_at"
+          },
+          {
+            "$ref": "#/parameters/body.agent_profiles"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "agent_profiles"
+        ]
+      }
+    },
+    "/leads": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.leads.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.phone"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.instagram_handle"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.stage"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.ai_active"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.updated_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/leads"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "leads"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.leads"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "leads"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.leads.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.phone"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.instagram_handle"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.stage"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.ai_active"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.updated_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "leads"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.leads.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.phone"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.instagram_handle"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.stage"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.ai_active"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.created_at"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.leads.updated_at"
+          },
+          {
+            "$ref": "#/parameters/body.leads"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "leads"
+        ]
+      }
+    },
+    "/lead_tags": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.tag_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/lead_tags"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "lead_tags"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.lead_tags"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "lead_tags"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.tag_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "lead_tags"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.tag_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.lead_tags.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/body.lead_tags"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "lead_tags"
+        ]
+      }
+    },
+    "/messages": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.messages.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.agent_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.sender_type"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.channel"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.content"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.media_url"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.created_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/messages"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "messages"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.messages"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "messages"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.messages.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.agent_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.sender_type"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.channel"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.content"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.media_url"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.created_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "messages"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.messages.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.agent_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.sender_type"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.channel"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.content"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.media_url"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.messages.created_at"
+          },
+          {
+            "$ref": "#/parameters/body.messages"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "messages"
+        ]
+      }
+    },
+    "/tags": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.tags.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.color"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.created_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/tags"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "tags"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.tags"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "tags"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.tags.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.color"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.created_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "tags"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.tags.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.name"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.color"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.tags.created_at"
+          },
+          {
+            "$ref": "#/parameters/body.tags"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "tags"
+        ]
+      }
+    },
+    "/follow_ups": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.agent_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.scheduled_for"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.created_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/follow_ups"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "follow_ups"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.follow_ups"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "follow_ups"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.agent_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.scheduled_for"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.created_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "follow_ups"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.lead_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.agent_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.description"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.scheduled_for"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.status"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.follow_ups.created_at"
+          },
+          {
+            "$ref": "#/parameters/body.follow_ups"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "follow_ups"
+        ]
+      }
+    },
+    "/ai_settings": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.system_prompt"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.temperature"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.pause_trigger_phrases"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.updated_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/ai_settings"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "ai_settings"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.ai_settings"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "ai_settings"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.system_prompt"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.temperature"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.pause_trigger_phrases"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.updated_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "ai_settings"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.tenant_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.system_prompt"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.temperature"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.pause_trigger_phrases"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.ai_settings.updated_at"
+          },
+          {
+            "$ref": "#/parameters/body.ai_settings"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "ai_settings"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "atendimento_status": {
+      "required": [
+        "telefone",
+        "dono"
+      ],
+      "properties": {
+        "telefone": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "text",
+          "type": "string"
+        },
+        "dono": {
+          "default": "bot",
+          "format": "text",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "agent_profiles": {
+      "required": [
+        "id",
+        "tenant_id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "format": "text",
+          "type": "string"
+        },
+        "role": {
+          "default": "atendente",
+          "enum": [
+            "admin",
+            "atendente"
+          ],
+          "format": "public.user_role",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "leads": {
+      "required": [
+        "id",
+        "tenant_id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "format": "text",
+          "type": "string"
+        },
+        "phone": {
+          "format": "text",
+          "type": "string"
+        },
+        "instagram_handle": {
+          "format": "text",
+          "type": "string"
+        },
+        "stage": {
+          "default": "Novo",
+          "enum": [
+            "Novo",
+            "Em Atendimento",
+            "Proposta",
+            "Ganho",
+            "Perdido"
+          ],
+          "format": "public.lead_stage",
+          "type": "string"
+        },
+        "ai_active": {
+          "default": true,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "updated_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "lead_tags": {
+      "required": [
+        "lead_id",
+        "tag_id",
+        "tenant_id"
+      ],
+      "properties": {
+        "lead_id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>\nThis is a Foreign Key to `leads.id`.<fk table='leads' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "tag_id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>\nThis is a Foreign Key to `tags.id`.<fk table='tags' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "messages": {
+      "required": [
+        "id",
+        "tenant_id",
+        "sender_type",
+        "channel"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "lead_id": {
+          "description": "Note:\nThis is a Foreign Key to `leads.id`.<fk table='leads' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "agent_id": {
+          "description": "Note:\nThis is a Foreign Key to `agent_profiles.id`.<fk table='agent_profiles' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "sender_type": {
+          "enum": [
+            "lead",
+            "agent",
+            "ai"
+          ],
+          "format": "public.message_sender",
+          "type": "string"
+        },
+        "channel": {
+          "enum": [
+            "whatsapp",
+            "instagram"
+          ],
+          "format": "public.message_channel",
+          "type": "string"
+        },
+        "content": {
+          "format": "text",
+          "type": "string"
+        },
+        "media_url": {
+          "format": "text",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "tags": {
+      "required": [
+        "id",
+        "tenant_id",
+        "name",
+        "color"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "name": {
+          "format": "text",
+          "type": "string"
+        },
+        "color": {
+          "format": "text",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "follow_ups": {
+      "required": [
+        "id",
+        "tenant_id",
+        "description",
+        "scheduled_for"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "lead_id": {
+          "description": "Note:\nThis is a Foreign Key to `leads.id`.<fk table='leads' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "agent_id": {
+          "description": "Note:\nThis is a Foreign Key to `agent_profiles.id`.<fk table='agent_profiles' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "description": {
+          "format": "text",
+          "type": "string"
+        },
+        "scheduled_for": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "completed",
+            "cancelled"
+          ],
+          "format": "public.follow_up_status",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ai_settings": {
+      "required": [
+        "id",
+        "tenant_id",
+        "system_prompt"
+      ],
+      "properties": {
+        "id": {
+          "default": "extensions.uuid_generate_v4()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "tenant_id": {
+          "format": "uuid",
+          "type": "string"
+        },
+        "system_prompt": {
+          "format": "text",
+          "type": "string"
+        },
+        "temperature": {
+          "default": 0.7,
+          "format": "numeric",
+          "type": "number"
+        },
+        "pause_trigger_phrases": {
+          "format": "text[]",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "updated_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "parameters": {
+    "preferParams": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "in": "header",
+      "type": "string"
+    },
+    "preferReturn": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "return=representation",
+        "return=minimal",
+        "return=none"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "preferCount": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "count=none"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "preferPost": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "return=representation",
+        "return=minimal",
+        "return=none",
+        "resolution=ignore-duplicates",
+        "resolution=merge-duplicates"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "select": {
+      "name": "select",
+      "description": "Filtering Columns",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "on_conflict": {
+      "name": "on_conflict",
+      "description": "On Conflict",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "order": {
+      "name": "order",
+      "description": "Ordering",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "range": {
+      "name": "Range",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "header",
+      "type": "string"
+    },
+    "rangeUnit": {
+      "name": "Range-Unit",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "default": "items",
+      "in": "header",
+      "type": "string"
+    },
+    "offset": {
+      "name": "offset",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "limit": {
+      "name": "limit",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.atendimento_status": {
+      "name": "atendimento_status",
+      "description": "atendimento_status",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/atendimento_status"
+      }
+    },
+    "rowFilter.atendimento_status.telefone": {
+      "name": "telefone",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.atendimento_status.dono": {
+      "name": "dono",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.agent_profiles": {
+      "name": "agent_profiles",
+      "description": "agent_profiles",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/agent_profiles"
+      }
+    },
+    "rowFilter.agent_profiles.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.agent_profiles.tenant_id": {
+      "name": "tenant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.agent_profiles.name": {
+      "name": "name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.agent_profiles.role": {
+      "name": "role",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.agent_profiles.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.leads": {
+      "name": "leads",
+      "description": "leads",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/leads"
+      }
+    },
+    "rowFilter.leads.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.leads.tenant_id": {
+      "name": "tenant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.leads.name": {
+      "name": "name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.leads.phone": {
+      "name": "phone",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.leads.instagram_handle": {
+      "name": "instagram_handle",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.leads.stage": {
+      "name": "stage",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.leads.ai_active": {
+      "name": "ai_active",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.leads.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.leads.updated_at": {
+      "name": "updated_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.lead_tags": {
+      "name": "lead_tags",
+      "description": "lead_tags",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/lead_tags"
+      }
+    },
+    "rowFilter.lead_tags.lead_id": {
+      "name": "lead_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.lead_tags.tag_id": {
+      "name": "tag_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.lead_tags.tenant_id": {
+      "name": "tenant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.messages": {
+      "name": "messages",
+      "description": "messages",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/messages"
+      }
+    },
+    "rowFilter.messages.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.messages.tenant_id": {
+      "name": "tenant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.messages.lead_id": {
+      "name": "lead_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.messages.agent_id": {
+      "name": "agent_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.messages.sender_type": {
+      "name": "sender_type",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.messages.channel": {
+      "name": "channel",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.messages.content": {
+      "name": "content",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.messages.media_url": {
+      "name": "media_url",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.messages.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.tags": {
+      "name": "tags",
+      "description": "tags",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/tags"
+      }
+    },
+    "rowFilter.tags.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.tags.tenant_id": {
+      "name": "tenant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.tags.name": {
+      "name": "name",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.tags.color": {
+      "name": "color",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.tags.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.follow_ups": {
+      "name": "follow_ups",
+      "description": "follow_ups",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/follow_ups"
+      }
+    },
+    "rowFilter.follow_ups.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.follow_ups.tenant_id": {
+      "name": "tenant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.follow_ups.lead_id": {
+      "name": "lead_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.follow_ups.agent_id": {
+      "name": "agent_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.follow_ups.description": {
+      "name": "description",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.follow_ups.scheduled_for": {
+      "name": "scheduled_for",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.follow_ups.status": {
+      "name": "status",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.follow_ups.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.ai_settings": {
+      "name": "ai_settings",
+      "description": "ai_settings",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/ai_settings"
+      }
+    },
+    "rowFilter.ai_settings.id": {
+      "name": "id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.ai_settings.tenant_id": {
+      "name": "tenant_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.ai_settings.system_prompt": {
+      "name": "system_prompt",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.ai_settings.temperature": {
+      "name": "temperature",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.ai_settings.pause_trigger_phrases": {
+      "name": "pause_trigger_phrases",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.ai_settings.updated_at": {
+      "name": "updated_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    }
+  },
+  "externalDocs": {
+    "description": "PostgREST Documentation",
+    "url": "https://postgrest.org/en/v14/references/api.html"
+  }
+}
