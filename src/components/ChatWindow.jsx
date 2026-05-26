@@ -205,7 +205,10 @@ export default function ChatWindow() {
               <span className="active-contact-name">{activeContact.name}</span>
               <div className="active-contact-channel">
                 <span className={`tag tag-${activeContact.channel}`}>
-                  {activeContact.channel}
+                  {activeContact.channel === 'whatsapp' ? (
+                    activeContact.provider === 'meta_cloud' ? 'WhatsApp Oficial' :
+                    activeContact.provider === 'evolution' ? 'Evolution API' : 'WhatsApp'
+                  ) : activeContact.channel}
                 </span>
                 <span className={`tag status-${activeContact.status}`}>
                   {activeContact.status}
@@ -229,7 +232,39 @@ export default function ChatWindow() {
           {activeContact.messages.map(msg => (
             <div key={msg.id} className={`message-bubble-wrapper ${msg.sender}`}>
               <div className="message-bubble">
-                {msg.text}
+                {msg.content_type === 'image' && msg.media_url ? (
+                  <div>
+                    <img 
+                      src={msg.media_url} 
+                      alt="Imagem enviada" 
+                      style={{ maxWidth: '280px', borderRadius: '8px', display: 'block', marginBottom: '8px', cursor: 'pointer' }}
+                      onClick={() => window.open(msg.media_url, '_blank')}
+                    />
+                    {msg.text && msg.text !== '[Imagem]' && <div>{msg.text}</div>}
+                  </div>
+                ) : msg.content_type === 'audio' && msg.media_url ? (
+                  <div>
+                    <audio src={msg.media_url} controls style={{ maxWidth: '240px', display: 'block', outline: 'none' }} />
+                  </div>
+                ) : msg.content_type === 'video' && msg.media_url ? (
+                  <div>
+                    <video src={msg.media_url} controls style={{ maxWidth: '280px', borderRadius: '8px', display: 'block', marginBottom: '8px' }} />
+                    {msg.text && msg.text !== '[Vídeo]' && <div>{msg.text}</div>}
+                  </div>
+                ) : msg.content_type === 'document' && msg.media_url ? (
+                  <div>
+                    <a 
+                      href={msg.media_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)', textDecoration: 'underline' }}
+                    >
+                      📁 {msg.text || 'Documento'}
+                    </a>
+                  </div>
+                ) : (
+                  msg.text
+                )}
               </div>
               <div className="message-meta-row">
                 <span>{msg.sender === 'agent' ? 'Agente' : msg.sender === 'bot' ? 'Automação Bot' : 'Cliente'}</span>
@@ -333,7 +368,12 @@ export default function ChatWindow() {
           </div>
           <span className="profile-name">{activeContact.name}</span>
           <div className="profile-meta-chips">
-            <span className={`tag tag-${activeContact.channel}`}>{activeContact.channel}</span>
+            <span className={`tag tag-${activeContact.channel}`}>
+              {activeContact.channel === 'whatsapp' ? (
+                activeContact.provider === 'meta_cloud' ? 'WhatsApp Oficial' :
+                activeContact.provider === 'evolution' ? 'Evolution API' : 'WhatsApp'
+              ) : activeContact.channel}
+            </span>
             <span className={`tag status-${activeContact.status}`}>{activeContact.status}</span>
           </div>
         </div>

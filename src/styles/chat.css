@@ -2,12 +2,13 @@
 .chat-workspace {
   display: grid;
   grid-template-columns: 320px 1fr 340px;
-  height: calc(100vh - 48px);
-  width: 100%;
+  height: calc(100% - 48px);
+  width: calc(100% - 48px);
   overflow: hidden;
   background: var(--bg-surface-solid);
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-glass);
+  min-height: 0;
 }
 
 @media (max-width: 1200px) {
@@ -35,6 +36,8 @@
   flex-direction: column;
   height: 100%;
   background: var(--bg-sidebar);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .chat-list-header {
@@ -197,6 +200,7 @@
   height: 100%;
   background: var(--bg-app);
   overflow: hidden;
+  min-height: 0;
 }
 
 .active-chat-header {
@@ -235,6 +239,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
 }
 
 /* Speech Bubble layouts */
@@ -374,6 +379,7 @@
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .profile-header-card {

@@ -166,7 +166,14 @@ export default function ContactsList() {
                       {contact.channel === 'telegram' && 'T'}
                       {contact.channel === 'webchat' && 'C'}
                     </span>
-                    <span style={{ textTransform: 'capitalize', fontSize: '13px' }}>{contact.channel}</span>
+                    <span style={{ fontSize: '13px' }}>
+                      {contact.channel === 'whatsapp' ? (
+                        contact.provider === 'meta_cloud' ? 'Whats (Oficial)' :
+                        contact.provider === 'evolution' ? 'Whats (Evolution)' : 'WhatsApp'
+                      ) : (
+                        contact.channel.charAt(0).toUpperCase() + contact.channel.slice(1)
+                      )}
+                    </span>
                   </span>
                 </td>
 
