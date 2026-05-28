@@ -121,7 +121,6 @@
             { "name": "direction", "value": "out" },
             { "name": "content", "value": "={{ $json.content || $input.first().json.content }}" },
             { "name": "content_type", "value": "text" },
-            { "name": "status", "value": "sent" },
             { "name": "timestamp", "value": "={{ new Date().toISOString() }}" }
           ]
         }

@@ -28,25 +28,52 @@ function sendPost(url, body) {
 }
 
 async function run() {
-  // Test the URL the frontend uses
-  console.log("Testing outbound URL (as frontend sends it): /webhook/send");
-  const res1 = await sendPost("https://n8n-n8n.rh3fr2.easypanel.host/webhook/send", {
+  console.log("Testing outbound webhook /webhook/send with valid contact_id");
+  const payload = {
     channel_id: "4886443e-4996-4d2a-83e1-d96f503e1a28",
-    phone: "5511999999999",
-    content: "Test from frontend URL"
-  });
-  console.log(`  Status: ${res1.statusCode}`);
-  console.log(`  Body: ${res1.body}`);
+    contact_id: "69c52004-a487-474f-a2cc-529f1a1b3505",
+    phone: "5512991960679",
+    content: "Teste de envio Meta API por Antigravity às " + new Date().toLocaleTimeString()
+  };
+  
+  console.log("Payload:", JSON.stringify(payload, null, 2));
+  
+  const res1 = await sendPost("https://n8n-n8n.rh3fr2.easypanel.host/webhook/send", payload);
+  console.log(`  Status Code: ${res1.statusCode}`);
+  console.log(`  Response Body: ${res1.body}`);
 
-  // Test with /webhook/webhook/send 
-  console.log("\nTesting /webhook/webhook/send");
-  const res2 = await sendPost("https://n8n-n8n.rh3fr2.easypanel.host/webhook/webhook/send", {
-    channel_id: "4886443e-4996-4d2a-83e1-d96f503e1a28",
-    phone: "5511999999999",
-    content: "Test from double webhook URL"
-  });
-  console.log(`  Status: ${res2.statusCode}`);
-  console.log(`  Body: ${res2.body}`);
+  if (res1.statusCode === 200) {
+    console.log("\nSuccess! Verifying message insertion in Supabase...");
+    
+    // Wait a brief moment for database sync
+    await new Promise(r => setTimeout(r, 2000));
+    
+    const queryUrl = `${supabaseUrl}/rest/v1/messages?contact_id=eq.${payload.contact_id}&order=timestamp.desc&limit=3`;
+    const options = {
+      headers: {
+        'apikey': serviceKey,
+        'Authorization': `Bearer ${serviceKey}`
+      }
+    };
+    
+    https.get(queryUrl, options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const msgs = JSON.parse(data);
+          console.log("\n=== LATEST MESSAGES LOGGED IN SUPABASE ===");
+          msgs.forEach(m => {
+            console.log(`- ID: ${m.id} | Dir: ${m.direction} | Content: "${m.content}" | Timestamp: ${m.timestamp}`);
+          });
+        } catch (e) {
+          console.error("Failed to parse Supabase response:", data);
+        }
+      });
+    });
+  } else {
+    console.log("\nFailed request. Checking n8n server logs may be needed.");
+  }
 }
 
 run();

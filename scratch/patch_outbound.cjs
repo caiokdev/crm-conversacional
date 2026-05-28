@@ -12,7 +12,7 @@ const contactId = $json.body?.contact_id || $json.contact_id;
 const supabaseUrl = "https://ibyterftfrqgkhktkaeg.supabase.co";
 const serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8";
 
-const channelResp = await $helpers.httpRequest({
+const channelResp = await this.helpers.httpRequest({
   method: 'GET',
   url: \`\${supabaseUrl}/rest/v1/channels?id=eq.\${channelId}&select=*\`,
   headers: {
@@ -81,7 +81,7 @@ async function run() {
       {
         parameters: {
           httpMethod: "POST",
-          path: "webhook/send",
+          path: "send",
           responseMode: "lastNode",
           options: {}
         },
@@ -107,7 +107,7 @@ async function run() {
             string: [
               {
                 value1: "={{ $json.provider }}",
-                operation: "equals",
+                operation: "equal",
                 value2: "meta"
               }
             ]
@@ -126,7 +126,7 @@ async function run() {
           sendHeaders: true,
           headerParameters: {
             parameters: [
-              { "name": "Authorization", "value": "Bearer {{ $json.access_token }}" },
+              { "name": "Authorization", "value": "=Bearer {{ $json.access_token }}" },
               { "name": "Content-Type", "value": "application/json" }
             ]
           },
@@ -183,12 +183,11 @@ async function run() {
           sendBody: true,
           bodyParameters: {
             parameters: [
-              { "name": "channel_id", "value": "={{ $json.channel_id || $input.first().json.channel_id }}" },
-              { "name": "contact_id", "value": "={{ $json.contact_id || $input.first().json.contact_id }}" },
+              { "name": "channel_id", "value": "={{ $('Resolve Channel').first().json.channel_id }}" },
+              { "name": "contact_id", "value": "={{ $('Resolve Channel').first().json.contact_id }}" },
               { "name": "direction", "value": "out" },
-              { "name": "content", "value": "={{ $json.content || $input.first().json.content }}" },
+              { "name": "content", "value": "={{ $('Resolve Channel').first().json.content }}" },
               { "name": "content_type", "value": "text" },
-              { "name": "status", "value": "sent" },
               { "name": "timestamp", "value": "={{ new Date().toISOString() }}" }
             ]
           },

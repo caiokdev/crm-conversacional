@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-26T16:32:32.225Z",
+  "updatedAt": "2026-05-28T14:44:35.588Z",
   "createdAt": "2026-05-21T21:59:30.185Z",
   "id": "NFkf4R8DDJ2o7Sqx",
   "name": "WhatsApp – Outbound Send Message",
@@ -10,7 +10,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "webhook/send",
+        "path": "send",
         "responseMode": "lastNode",
         "options": {}
       },
@@ -22,14 +22,16 @@
         960,
         928
       ],
-      "webhookId": "e4bd282f-d2b5-4023-b7c4-2befa00e1cf5"
+      "webhookId": "234e67bc-2680-4e6a-918e-82d113afd202"
     },
     {
-      "parameters": {},
+      "parameters": {
+        "jsCode": "// Fetch channel details from Supabase to determine provider\nconst channelId = $json.body?.channel_id || $json.channel_id;\nconst content = $json.body?.content || $json.content;\nconst phone = $json.body?.phone || $json.phone;\nconst contactId = $json.body?.contact_id || $json.contact_id;\n\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\n\nconst channelResp = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `${supabaseUrl}/rest/v1/channels?id=eq.${channelId}&select=*`,\n  headers: {\n    'apikey': serviceKey,\n    'Authorization': `Bearer ${serviceKey}`\n  }\n});\n\nconst channel = channelResp?.[0];\nif (!channel) {\n  throw new Error(`Channel ${channelId} not found`);\n}\n\nreturn [{\n  json: {\n    channel_id: channelId,\n    contact_id: contactId,\n    provider: channel.provider,\n    content: content,\n    phone: phone,\n    // Meta fields\n    phone_id: channel.phone_id,\n    access_token: channel.access_token,\n    // Evolution fields\n    evo_url: channel.url,\n    evo_instance: channel.instance,\n    evo_api_key: channel.api_key\n  }\n}];"
+      },
       "id": "36a82d05-75ba-4e5a-bff4-201382e2fd6e",
       "name": "Resolve Channel",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
+      "typeVersion": 2,
       "position": [
         1200,
         928
@@ -41,7 +43,7 @@
           "string": [
             {
               "value1": "={{ $json.provider }}",
-              "operation": "equals",
+              "operation": "equal",
               "value2": "meta"
             }
           ]
@@ -65,7 +67,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer {{ $json.access_token }}"
+              "value": "=Bearer {{ $json.access_token }}"
             },
             {
               "name": "Content-Type",
@@ -125,17 +127,17 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/messages",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
             },
             {
               "name": "Authorization",
-              "value": "Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
             },
             {
               "name": "Content-Type",
@@ -152,11 +154,11 @@
           "parameters": [
             {
               "name": "channel_id",
-              "value": "={{ $json.channel_id || $input.first().json.channel_id }}"
+              "value": "={{ $('Resolve Channel').first().json.channel_id }}"
             },
             {
               "name": "contact_id",
-              "value": "={{ $json.contact_id || $input.first().json.contact_id }}"
+              "value": "={{ $('Resolve Channel').first().json.contact_id }}"
             },
             {
               "name": "direction",
@@ -164,7 +166,7 @@
             },
             {
               "name": "content",
-              "value": "={{ $json.content || $input.first().json.content }}"
+              "value": "={{ $('Resolve Channel').first().json.content }}"
             },
             {
               "name": "content_type",
@@ -192,11 +194,13 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "jsCode": "return [{ json: { success: true, message: 'Mensagem enviada com sucesso' } }];"
+      },
       "id": "cf9b8f69-3960-4a69-a4de-214830b2d082",
       "name": "Response OK1",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
+      "typeVersion": 2,
       "position": [
         2208,
         928
@@ -285,9 +289,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "6397de0f-28be-4f5e-b5f9-b4e61e4e08ac",
-  "activeVersionId": "6397de0f-28be-4f5e-b5f9-b4e61e4e08ac",
-  "versionCounter": 46,
+  "versionId": "e545ec18-63e6-41a7-80c9-c0dc569985ac",
+  "activeVersionId": "e545ec18-63e6-41a7-80c9-c0dc569985ac",
+  "versionCounter": 160,
   "triggerCount": 1,
   "shared": [
     {
@@ -310,15 +314,15 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-05-26T16:32:33.000Z",
-    "createdAt": "2026-05-26T16:32:32.226Z",
-    "versionId": "6397de0f-28be-4f5e-b5f9-b4e61e4e08ac",
+    "updatedAt": "2026-05-28T14:44:35.589Z",
+    "createdAt": "2026-05-28T14:44:35.589Z",
+    "versionId": "e545ec18-63e6-41a7-80c9-c0dc569985ac",
     "workflowId": "NFkf4R8DDJ2o7Sqx",
     "nodes": [
       {
         "parameters": {
           "httpMethod": "POST",
-          "path": "webhook/send",
+          "path": "send",
           "responseMode": "lastNode",
           "options": {}
         },
@@ -330,14 +334,16 @@
           960,
           928
         ],
-        "webhookId": "e4bd282f-d2b5-4023-b7c4-2befa00e1cf5"
+        "webhookId": "234e67bc-2680-4e6a-918e-82d113afd202"
       },
       {
-        "parameters": {},
+        "parameters": {
+          "jsCode": "// Fetch channel details from Supabase to determine provider\nconst channelId = $json.body?.channel_id || $json.channel_id;\nconst content = $json.body?.content || $json.content;\nconst phone = $json.body?.phone || $json.phone;\nconst contactId = $json.body?.contact_id || $json.contact_id;\n\nconst supabaseUrl = \"https://ibyterftfrqgkhktkaeg.supabase.co\";\nconst serviceKey = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8\";\n\nconst channelResp = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `${supabaseUrl}/rest/v1/channels?id=eq.${channelId}&select=*`,\n  headers: {\n    'apikey': serviceKey,\n    'Authorization': `Bearer ${serviceKey}`\n  }\n});\n\nconst channel = channelResp?.[0];\nif (!channel) {\n  throw new Error(`Channel ${channelId} not found`);\n}\n\nreturn [{\n  json: {\n    channel_id: channelId,\n    contact_id: contactId,\n    provider: channel.provider,\n    content: content,\n    phone: phone,\n    // Meta fields\n    phone_id: channel.phone_id,\n    access_token: channel.access_token,\n    // Evolution fields\n    evo_url: channel.url,\n    evo_instance: channel.instance,\n    evo_api_key: channel.api_key\n  }\n}];"
+        },
         "id": "36a82d05-75ba-4e5a-bff4-201382e2fd6e",
         "name": "Resolve Channel",
         "type": "n8n-nodes-base.code",
-        "typeVersion": 1,
+        "typeVersion": 2,
         "position": [
           1200,
           928
@@ -349,7 +355,7 @@
             "string": [
               {
                 "value1": "={{ $json.provider }}",
-                "operation": "equals",
+                "operation": "equal",
                 "value2": "meta"
               }
             ]
@@ -373,7 +379,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "Bearer {{ $json.access_token }}"
+                "value": "=Bearer {{ $json.access_token }}"
               },
               {
                 "name": "Content-Type",
@@ -433,17 +439,17 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "={{ $env.SUPABASE_URL }}/rest/v1/messages",
+          "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
               {
                 "name": "apikey",
-                "value": "={{ $env.SUPABASE_SERVICE_KEY }}"
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
               },
               {
                 "name": "Authorization",
-                "value": "Bearer {{ $env.SUPABASE_SERVICE_KEY }}"
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
               },
               {
                 "name": "Content-Type",
@@ -460,11 +466,11 @@
             "parameters": [
               {
                 "name": "channel_id",
-                "value": "={{ $json.channel_id || $input.first().json.channel_id }}"
+                "value": "={{ $('Resolve Channel').first().json.channel_id }}"
               },
               {
                 "name": "contact_id",
-                "value": "={{ $json.contact_id || $input.first().json.contact_id }}"
+                "value": "={{ $('Resolve Channel').first().json.contact_id }}"
               },
               {
                 "name": "direction",
@@ -472,7 +478,7 @@
               },
               {
                 "name": "content",
-                "value": "={{ $json.content || $input.first().json.content }}"
+                "value": "={{ $('Resolve Channel').first().json.content }}"
               },
               {
                 "name": "content_type",
@@ -500,11 +506,13 @@
         ]
       },
       {
-        "parameters": {},
+        "parameters": {
+          "jsCode": "return [{ json: { success: true, message: 'Mensagem enviada com sucesso' } }];"
+        },
         "id": "cf9b8f69-3960-4a69-a4de-214830b2d082",
         "name": "Response OK1",
         "type": "n8n-nodes-base.code",
-        "typeVersion": 1,
+        "typeVersion": 2,
         "position": [
           2208,
           928
@@ -587,15 +595,15 @@
       }
     },
     "authors": "Wilker Amaral",
-    "name": "Version 6397de0f",
-    "description": "",
+    "name": null,
+    "description": null,
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-05-26T16:32:33.415Z",
-        "id": 526,
+        "createdAt": "2026-05-28T14:44:35.665Z",
+        "id": 695,
         "workflowId": "NFkf4R8DDJ2o7Sqx",
-        "versionId": "6397de0f-28be-4f5e-b5f9-b4e61e4e08ac",
+        "versionId": "e545ec18-63e6-41a7-80c9-c0dc569985ac",
         "event": "activated",
         "userId": "27f66831-b616-40da-b6da-90d3ea12a46b"
       }

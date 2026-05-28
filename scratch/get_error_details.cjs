@@ -16,7 +16,7 @@ function apiCall(path) {
 
 async function run() {
   // Get detailed execution info for the errors
-  const errorIds = [33694, 33691];
+  const errorIds = [34980, 34977];
   
   for (const id of errorIds) {
     console.log(`\n=== Execution ${id} Details ===`);
@@ -24,10 +24,9 @@ async function run() {
     console.log(`Workflow: ${exec.workflowId}`);
     console.log(`Status: ${exec.status}`);
     console.log(`Started: ${exec.startedAt}`);
-    console.log(`Finished: ${exec.stoppedAt}`);
     
-    if (exec.data?.resultData) {
-      const rd = exec.data.resultData;
+    if (exec.data) {
+      const rd = exec.data.resultData || {};
       if (rd.error) {
         console.log(`\nGlobal Error:`, JSON.stringify(rd.error, null, 2));
       }
@@ -40,14 +39,11 @@ async function run() {
             console.log(`\nNode "${nodeName}" ERROR:`);
             console.log(`  Message: ${ne.error.message}`);
             console.log(`  Description: ${ne.error.description || 'N/A'}`);
+            console.log(`  Details:`, JSON.stringify(ne.error, null, 2));
           }
-          // Check output data for error indicators
           if (ne.data?.main?.[0]) {
-            for (const item of ne.data.main[0]) {
-              if (item.json?.skip || item.json?.error) {
-                console.log(`\nNode "${nodeName}" output indicates issue:`, JSON.stringify(item.json, null, 2));
-              }
-            }
+            console.log(`\nNode "${nodeName}" data count: ${ne.data.main.length}`);
+            console.log(`  Inputs:`, JSON.stringify(ne.data.main[0], null, 2));
           }
         }
       }
