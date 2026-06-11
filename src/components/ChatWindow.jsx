@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCrm } from '../context/CrmContext';
 import { MessageSquare, FileText, Calendar, PenLine, Send, Loader2, CheckCheck, XCircle, Bot, User } from 'lucide-react';
+import AudioPlayer from './AudioPlayer';
 
 export default function ChatWindow() {
   const {
@@ -279,10 +280,16 @@ export default function ChatWindow() {
                     />
                     {msg.text && msg.text !== '[Imagem]' && <div>{msg.text}</div>}
                   </div>
-                ) : msg.content_type === 'audio' && msg.media_url ? (
+                ) : msg.content_type === 'sticker' && msg.media_url ? (
                   <div>
-                    <audio src={msg.media_url} controls style={{ maxWidth: '240px', display: 'block', outline: 'none' }} />
+                    <img 
+                      src={msg.media_url} 
+                      alt="Figurinha enviada" 
+                      style={{ width: '120px', height: '120px', objectFit: 'contain', background: 'transparent', display: 'block' }}
+                    />
                   </div>
+                ) : msg.content_type === 'audio' && msg.media_url ? (
+                  <AudioPlayer src={msg.media_url} />
                 ) : msg.content_type === 'video' && msg.media_url ? (
                   <div>
                     <video src={msg.media_url} controls style={{ maxWidth: '280px', borderRadius: '8px', display: 'block', marginBottom: '8px' }} />
