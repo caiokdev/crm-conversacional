@@ -22,6 +22,7 @@
         "method": "GET",
         "url": "=https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/channels?id=eq.{{ $json.body?.channel_id || $json.channel_id }}&select=*",
         "sendHeaders": true,
+        "options": {},
         "headerParameters": {
           "parameters": [
             {
@@ -33,8 +34,7 @@
               "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
             }
           ]
-        },
-        "options": {}
+        }
       },
       "id": "node-fetch-channel",
       "name": "Fetch Channel from DB",

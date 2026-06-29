@@ -250,6 +250,7 @@
         "method": "GET",
         "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/ai_settings?limit=1",
         "sendHeaders": true,
+        "options": {},
         "headerParameters": {
           "parameters": [
             {
@@ -261,8 +262,7 @@
               "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
             }
           ]
-        },
-        "options": {}
+        }
       },
       "id": "6dac0cc8-636f-4daf-a1ac-42d46a50d841",
       "name": "Fetch AI Settings",
@@ -366,6 +366,7 @@
         "method": "GET",
         "url": "=https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages?contact_id=eq.{{ $json.contact_id }}&order=timestamp.desc&limit=10",
         "sendHeaders": true,
+        "options": {},
         "headerParameters": {
           "parameters": [
             {
@@ -377,8 +378,7 @@
               "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
             }
           ]
-        },
-        "options": {}
+        }
       },
       "id": "e6e35f54-297c-4320-9fdd-913810dc7248",
       "name": "Fetch Conversation History",
@@ -391,7 +391,7 @@
     },
     {
       "parameters": {
-        "jsCode": "\nconst msgs = $input.all().map(item => item.json);\nmsgs.reverse();\n\nconst historyMessages = msgs.map(m => ({\n  role: m.direction === 'in' ? 'user' : 'assistant',\n  content: m.content || ''\n}));\n\nconst routerData = $('AI Routing Decision').first().json;\n\nconst systemContent = `${routerData.system_prompt}\\n\\nRESTRISÇÕES IMPORTANTES (O QUE NUNCA FAZER):\\n${routerData.negative_prompt}`;\n\nconst finalMessages = [\n  { role: 'system', content: systemContent },\n  ...historyMessages,\n  { role: 'user', content: routerData.user_message }\n];\n\nreturn [{\n  json: {\n    api_key: routerData.api_key,\n    model: routerData.model,\n    temperature: routerData.temperature,\n    messages: finalMessages,\n    contact_id: routerData.contact_id,\n    phone: routerData.phone,\n    channel_id: \"15d09eea-b9b9-42f5-8231-8248dbb5fe7a\"\n  }\n}];\n"
+        "jsCode": "const msgs = $input.all().map(item => item.json);\nconst inboundMsgs = msgs.filter(m => m.direction === 'in');\nconst routerData = $('AI Routing Decision').first().json;\nconst welcomeMessage = routerData.welcome_message || '';\n\nif (inboundMsgs.length <= 1 && welcomeMessage.trim() !== '') {\n  return [{\n    json: {\n      is_welcome: true,\n      contact_id: routerData.contact_id,\n      phone: routerData.phone,\n      channel_id: routerData.channel_id,\n      content: welcomeMessage\n    }\n  }];\n}\n\nmsgs.reverse();\n\nconst historyText = msgs.map(m => {\n  const role = m.direction === 'in' ? 'USER' : 'ASSISTANT';\n  return `${role}: ${m.content || ''}`;\n}).join('\\n\\n');\n\nconst systemContent = `${routerData.system_prompt}\\n\\nRESTRISÇÕES IMPORTANTES (O QUE NUNCA FAZER):\\n${routerData.negative_prompt}`;\n\nconst systemMessage = `${systemContent}\\n\\nCONVERSATION HISTORY:\\n${historyText}`;\n\nreturn [{\n  json: {\n    is_welcome: false,\n    api_key: routerData.api_key,\n    model: routerData.model,\n    temperature: routerData.temperature,\n    chatInput: routerData.user_message,\n    systemMessage: systemMessage,\n    contact_id: routerData.contact_id,\n    phone: routerData.phone,\n    channel_id: routerData.channel_id\n  }\n}];"
       },
       "id": "926d067b-a898-4253-b93e-c1f5f3e24b21",
       "name": "Format Prompt & History",
@@ -404,38 +404,7 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/chat/completions",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $json.api_key }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\"model\": \"{{ $json.model }}\", \"temperature\": {{ $json.temperature }}, \"messages\": {{ JSON.stringify($json.messages) }} }",
-        "options": {}
-      },
-      "id": "81d9982b-d697-47eb-a9a0-5cc49f276db2",
-      "name": "Call OpenAI API",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
-      "position": [
-        3100,
-        400
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "\nconst resp = $input.first().json;\nconst answer = resp.choices?.[0]?.message?.content || '';\nconst inputData = $('Format Prompt & History').first().json;\nreturn [{\n  json: {\n    contact_id: inputData.contact_id,\n    phone: inputData.phone,\n    channel_id: inputData.channel_id,\n    content: answer\n  }\n}];\n"
+        "jsCode": "const resp = $input.first().json;\nconst answer = resp.output || resp.text || resp.content || JSON.stringify(resp);\nconst inputData = $('Format Prompt & History').first().json;\nreturn [{\n  json: {\n    contact_id: inputData.contact_id,\n    phone: inputData.phone,\n    channel_id: inputData.channel_id,\n    content: answer\n  }\n}];"
       },
       "id": "85825a20-6b67-4add-ae72-2bde0dc92f06",
       "name": "Extract AI Answer",
@@ -471,6 +440,85 @@
       "position": [
         3500,
         400
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "={{ $json.systemMessage }}\n\nIMPORTANT TOOL RULES: Para mover o lead para 'won', é OBRIGATÓRIO haver um agendamento concreto (data e hora aceitos pelo lead). Confirmações genéricas não são suficientes."
+        }
+      },
+      "id": "agent-c0ayr",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1400,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "={{ $('Format Prompt & History').first().json.model || 'gpt-4o-mini' }}",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": "={{ $('Format Prompt & History').first().json.temperature || 0.7 }}"
+        }
+      },
+      "id": "model-9et8ft",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1300,
+        600
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "pnuusAYVVpBuDVbK",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "atualizar_funil_vendas",
+        "description": "Atualiza o estágio do lead no funil de vendas (pipeline_stage). OBRIGATÓRIO: só mova para 'won' se houver agendamento concreto de data e hora.",
+        "method": "PATCH",
+        "url": "=https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/contacts?id=eq.{{ $('AI Routing Decision').first().json.contact_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"pipeline_stage\": \"{{ $fromAI('pipeline_stage', 'Estágio do funil: new, contacted, proposal, won, lost', 'string') }}\"}",
+        "options": {}
+      },
+      "id": "tool-rnlh0v",
+      "name": "Atualizar Funil",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1500,
+        600
       ]
     }
   ],
@@ -623,18 +671,7 @@
       "main": [
         [
           {
-            "node": "Call OpenAI API",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Call OpenAI API": {
-      "main": [
-        [
-          {
-            "node": "Extract AI Answer",
+            "node": "AI Agent",
             "type": "main",
             "index": 0
           }
@@ -647,6 +684,39 @@
           {
             "node": "Send AI Response",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Extract AI Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Funil": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]

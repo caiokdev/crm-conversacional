@@ -14,9 +14,10 @@ begin
   if NEW.direction = 'in' then
     select
       net.http_post(
-        url:='https://n8n-n8n.rh3fr2.easypanel.host/webhook/ai-agent',
+        url:='https://n8n-n8n.rh3fr2.easypanel.host/webhook/b705693e-ddc4-4aea-98a3-16c742e1738e',
         headers:='{"Content-Type": "application/json"}'::jsonb,
         body:=jsonb_build_object(
+          'id', NEW.id,
           'contact_id', NEW.contact_id,
           'channel_id', NEW.channel_id,
           'user_message', NEW.content,

@@ -1,1 +1,726 @@
-{"name":"Instagram – Inbound Webhook","nodes":[{"parameters":{"httpMethod":"GET","path":"instagram","responseMode":"responseNode","options":{}},"id":"5db0bba3-5b13-43a3-9d1a-c6d8bedd625d","name":"Verify GET","type":"n8n-nodes-base.webhook","typeVersion":1,"position":[240,200]},{"parameters":{"httpMethod":"POST","path":"instagram","responseMode":"responseNode","options":{}},"id":"55c01a1e-98d7-494f-9d3f-d69fc207f82e","name":"Message POST","type":"n8n-nodes-base.webhook","typeVersion":1,"position":[240,420]},{"parameters":{"respondWith":"text","responseBody":"={{ $json.query?.['hub.challenge'] || '' }}","options":{"responseHeaders":{"entries":[{"name":"Content-Type","value":"text/plain"}]}}},"id":"f494f262-15a9-40b9-a166-cedea7f2ddea","name":"Respond Challenge","type":"n8n-nodes-base.respondToWebhook","typeVersion":1,"position":[460,200]},{"parameters":{"respondWith":"json","responseBody":"{\n  \"status\": \"ok\"\n}","options":{}},"id":"ec8e7a27-5181-4fdb-b9d6-63b7866adc7d","name":"Instant Response","type":"n8n-nodes-base.respondToWebhook","typeVersion":1,"position":[460,420]},{"parameters":{"jsCode":"const body = $input.first().json.body || $input.first().json;\n\nif (!body.entry || !body.entry[0]) {\n  return [{ json: { skip: true, reason: 'No entry in payload' } }];\n}\n\nconst entry = body.entry[0];\nconst messaging = entry.messaging?.[0];\n\nif (!messaging || !messaging.message) {\n  return [{ json: { skip: true, reason: 'No message in payload' } }];\n}\n\nconst message = messaging.message;\nconst senderId = messaging.sender?.id; \nconst recipientId = messaging.recipient?.id; \nconst msgId = message.mid || message.item_id;\nconst timestamp = messaging.timestamp; \nconst text = message.text || '';\nconst attachments = message.attachments;\n\nlet content = text;\nlet type = 'text';\nlet mediaUrl = null;\n\nif (attachments && attachments.length > 0) {\n  type = attachments[0].type; \n  mediaUrl = attachments[0].payload?.url;\n  if (!content) {\n    if (type === 'image') content = '[Imagem]';\n    else if (type === 'video') content = '[Vídeo]';\n    else if (type === 'audio') content = '[Áudio]';\n    else content = '[Mídia]';\n  }\n}\n\nreturn [{\n  json: JSON.parse(JSON.stringify({\n    whatsapp_msg_id: msgId || null,\n    phone: senderId || null,\n    contact_name: \"IG User \" + senderId, \n    direction: 'in',\n    content: content || null,\n    content_type: type || null,\n    media_url: mediaUrl || null,\n    timestamp: timestamp ? new Date(parseInt(timestamp)).toISOString() : null,\n    raw_payload: body,\n    source: \"instagram\"\n  }))\n}];"},"id":"c20a907f-54a3-4896-865c-9fbc3c858eb9","name":"Parse Instagram","type":"n8n-nodes-base.code","typeVersion":1,"position":[680,420]},{"parameters":{"conditions":{"boolean":[{"value1":"={{ $json.skip }}","value2":true}]}},"id":"4675a7ac-7e35-46ac-90fc-a0dba5d553a4","name":"Has Message?","type":"n8n-nodes-base.if","typeVersion":1,"position":[880,420]},{"parameters":{"method":"GET","url":"=https://graph.facebook.com/v20.0/{{ $json.phone }}","sendQuery":true,"queryParameters":{"parameters":[{"name":"fields","value":"name,username,profile_pic"},{"name":"access_token","value":"EAAOFwaqMDFoBRjHuckGTPEUMNxmvRjZCAvbT3eW9XWShRVkFMv1gGGaQ2FHF0A0VzL4xtZCEMwnKHTtK9fFMCdixmrUUM8HwOTusRObxXVnLWZBKMNJB5QlXoZBQNsLo6umPdBnyU1jkqPrK9IELxQUtzBDBw1QVKJePerVoMMHvpq4EOyTxbZCHSpp1qQZBteU9By3iQZD"}]},"options":{}},"id":"9ff14c7f-2cca-44e2-af9f-3aa4a762d35d","name":"Fetch IG Profile","type":"n8n-nodes-base.httpRequest","typeVersion":3,"position":[1100,500]},{"parameters":{"method":"POST","url":"https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/contacts?on_conflict=phone","sendHeaders":true,"headerParameters":{"parameters":[{"name":"apikey","value":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"},{"name":"Authorization","value":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"},{"name":"Content-Type","value":"application/json"},{"name":"Prefer","value":"resolution=merge-duplicates,return=representation"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={\n  \"phone\": \"{{ $json.id }}\",\n  \"name\": \"{{ $json.name ? $json.name + ' | @' + $json.username : $json.username }}\"\n}","options":{}},"id":"e2c8211a-4575-4b84-9314-ef3441021e4a","name":"Upsert Contact","type":"n8n-nodes-base.httpRequest","typeVersion":3,"position":[1320,500]},{"parameters":{"method":"POST","url":"https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages","sendHeaders":true,"headerParameters":{"parameters":[{"name":"apikey","value":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"},{"name":"Authorization","value":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"},{"name":"Content-Type","value":"application/json"},{"name":"Prefer","value":"return=representation"}]},"sendBody":true,"bodyParameters":{"parameters":[{"name":"channel_id","value":"15d09eea-b9b9-42f5-8231-8248dbb5fe7a"},{"name":"contact_id","value":"={{ $json.id }}"},{"name":"direction","value":"in"},{"name":"content","value":"={{ $('Parse Instagram').item.json.content }}"},{"name":"content_type","value":"={{ $('Parse Instagram').item.json.content_type }}"},{"name":"media_url","value":"={{ $('Parse Instagram').item.json.media_url }}"},{"name":"whatsapp_msg_id","value":"={{ $('Parse Instagram').item.json.whatsapp_msg_id }}"},{"name":"timestamp","value":"={{ $('Parse Instagram').item.json.timestamp }}"}]}},"id":"6196f76e-ddbd-4897-982a-519a7cb6660a","name":"Insert Msg","type":"n8n-nodes-base.httpRequest","typeVersion":3,"position":[1540,500]},{"parameters":{"method":"GET","url":"https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/ai_settings?limit=1","sendHeaders":true,"headerParameters":{"parameters":[{"name":"apikey","value":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"},{"name":"Authorization","value":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"}]},"options":{}},"id":"6dac0cc8-636f-4daf-a1ac-42d46a50d841","name":"Fetch AI Settings","type":"n8n-nodes-base.httpRequest","typeVersion":3,"position":[2100,300]},{"parameters":{"jsCode":"\nconst settings = $('Fetch AI Settings').first()?.json;\nif (!settings) {\n  return [{ json: { run_ai: false, reason: 'No settings found' } }];\n}\n\n// Retrieve contact tags\nlet contact = {};\ntry {\n  contact = $('Upsert Contact').first().json;\n} catch(e) {\n  try {\n    contact = $input.first().json; // fallback\n  } catch(err) {}\n}\n\nconst tags = contact.tags || [];\nconst isPausedByTag = tags.includes('IA Inativa');\n\n// Read columns directly from Supabase settings row\nconst isEnabledGlobal = settings.is_enabled === true;\nconst systemPrompt = settings.system_prompt || '';\nconst negativePrompt = settings.negative_prompt || '';\nconst apiKey = settings.api_key || '';\nconst model = settings.model || 'gpt-4o-mini';\nconst temperature = settings.temperature ?? 0.7;\n\n// Find message info dynamically\nlet msgText = '';\nlet direction = 'in';\nlet phone = contact.phone || '';\n\ntry {\n  const parsed = $('Parse Instagram').first().json;\n  msgText = parsed.content || '';\n  direction = parsed.direction || 'in';\n  if (!phone) phone = parsed.phone || '';\n} catch(e) {}\n\nconst isInbound = direction === 'in';\n\n// Check pause trigger phrases\nconst pausePhrases = settings.pause_trigger_phrases || [];\nconst matchedPhrase = pausePhrases.find(p => msgText.toLowerCase().includes(p.toLowerCase()));\n\nlet pauseBot = false;\nlet runAi = false;\nlet reason = '';\n\nif (!isEnabledGlobal) {\n  reason = 'AI is disabled globally';\n} else if (!isInbound) {\n  reason = 'Message is outbound';\n} else if (isPausedByTag) {\n  reason = 'AI is paused for this contact (IA Inativa tag present)';\n} else if (matchedPhrase) {\n  pauseBot = true;\n  reason = `AI paused by trigger phrase: \"${matchedPhrase}\"`;\n} else {\n  runAi = true;\n  reason = 'All checks passed, running AI';\n}\n\nconst updatedTags = isPausedByTag ? tags : [...tags, 'IA Inativa'];\n\nreturn [{\n  json: {\n    run_ai: runAi,\n    pause_bot: pauseBot,\n    reason: reason,\n    contact_id: contact.id,\n    phone: phone,\n    user_message: msgText,\n    system_prompt: systemPrompt,\n    negative_prompt: negativePrompt,\n    api_key: apiKey,\n    model: model,\n    temperature: temperature,\n    updated_tags: updatedTags\n  }\n}];\n"},"id":"a14f6358-7b39-4963-8bf1-f0d7f7e36348","name":"AI Routing Decision","type":"n8n-nodes-base.code","typeVersion":2,"position":[2300,300]},{"parameters":{"conditions":{"boolean":[{"value1":"={{ $json.pause_bot }}","value2":true}]}},"id":"83f4ac8b-d787-4879-be08-d1b5bc0f9f3a","name":"If Pause AI?","type":"n8n-nodes-base.if","typeVersion":1,"position":[2500,200]},{"parameters":{"method":"PATCH","url":"=https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/contacts?id=eq.{{ $json.contact_id }}","sendHeaders":true,"headerParameters":{"parameters":[{"name":"apikey","value":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"},{"name":"Authorization","value":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"},{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={\"tags\": {{ JSON.stringify($json.updated_tags) }} }","options":{}},"id":"ee6c2ec0-bdb2-4e71-a489-7edf682c0f25","name":"Pause Contact AI","type":"n8n-nodes-base.httpRequest","typeVersion":3,"position":[2700,100]},{"parameters":{"conditions":{"boolean":[{"value1":"={{ $json.run_ai }}","value2":true}]}},"id":"ab5ff5ac-7b58-4935-9ac5-1e0db11340f9","name":"If Run AI?","type":"n8n-nodes-base.if","typeVersion":1,"position":[2500,400]},{"parameters":{"method":"GET","url":"=https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages?contact_id=eq.{{ $json.contact_id }}&order=timestamp.desc&limit=10","sendHeaders":true,"headerParameters":{"parameters":[{"name":"apikey","value":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"},{"name":"Authorization","value":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"}]},"options":{}},"id":"e6e35f54-297c-4320-9fdd-913810dc7248","name":"Fetch Conversation History","type":"n8n-nodes-base.httpRequest","typeVersion":3,"position":[2700,400]},{"parameters":{"jsCode":"\nconst msgs = $input.all().map(item => item.json);\nmsgs.reverse();\n\nconst historyMessages = msgs.map(m => ({\n  role: m.direction === 'in' ? 'user' : 'assistant',\n  content: m.content || ''\n}));\n\nconst routerData = $('AI Routing Decision').first().json;\n\nconst systemContent = `${routerData.system_prompt}\\n\\nRESTRISÇÕES IMPORTANTES (O QUE NUNCA FAZER):\\n${routerData.negative_prompt}`;\n\nconst finalMessages = [\n  { role: 'system', content: systemContent },\n  ...historyMessages,\n  { role: 'user', content: routerData.user_message }\n];\n\nreturn [{\n  json: {\n    api_key: routerData.api_key,\n    model: routerData.model,\n    temperature: routerData.temperature,\n    messages: finalMessages,\n    contact_id: routerData.contact_id,\n    phone: routerData.phone,\n    channel_id: \"15d09eea-b9b9-42f5-8231-8248dbb5fe7a\"\n  }\n}];\n"},"id":"926d067b-a898-4253-b93e-c1f5f3e24b21","name":"Format Prompt & History","type":"n8n-nodes-base.code","typeVersion":2,"position":[2900,400]},{"parameters":{"method":"POST","url":"https://api.openai.com/v1/chat/completions","sendHeaders":true,"headerParameters":{"parameters":[{"name":"Authorization","value":"=Bearer {{ $json.api_key }}"},{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={\"model\": \"{{ $json.model }}\", \"temperature\": {{ $json.temperature }}, \"messages\": {{ JSON.stringify($json.messages) }} }","options":{}},"id":"81d9982b-d697-47eb-a9a0-5cc49f276db2","name":"Call OpenAI API","type":"n8n-nodes-base.httpRequest","typeVersion":3,"position":[3100,400]},{"parameters":{"jsCode":"\nconst resp = $input.first().json;\nconst answer = resp.choices?.[0]?.message?.content || '';\nconst inputData = $('Format Prompt & History').first().json;\nreturn [{\n  json: {\n    contact_id: inputData.contact_id,\n    phone: inputData.phone,\n    channel_id: inputData.channel_id,\n    content: answer\n  }\n}];\n"},"id":"85825a20-6b67-4add-ae72-2bde0dc92f06","name":"Extract AI Answer","type":"n8n-nodes-base.code","typeVersion":2,"position":[3300,400]},{"parameters":{"method":"POST","url":"https://n8n-n8n.rh3fr2.easypanel.host/webhook/send","sendHeaders":true,"headerParameters":{"parameters":[{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={\"channel_id\": \"{{ $json.channel_id }}\", \"contact_id\": \"{{ $json.contact_id }}\", \"phone\": \"{{ $json.phone }}\", \"content\": \"{{ $json.content }}\"}","options":{}},"id":"1001cffb-fc62-4ef6-9ffd-918361394c76","name":"Send AI Response","type":"n8n-nodes-base.httpRequest","typeVersion":3,"position":[3500,400]}],"connections":{"Verify GET":{"main":[[{"node":"Respond Challenge","type":"main","index":0}]]},"Message POST":{"main":[[{"node":"Instant Response","type":"main","index":0},{"node":"Parse Instagram","type":"main","index":0}]]},"Instant Response":{"main":[[]]},"Parse Instagram":{"main":[[{"node":"Has Message?","type":"main","index":0}]]},"Has Message?":{"main":[[],[{"node":"Fetch IG Profile","type":"main","index":0}]]},"Upsert Contact":{"main":[[{"node":"Insert Msg","type":"main","index":0}]]},"Fetch IG Profile":{"main":[[{"node":"Upsert Contact","type":"main","index":0}]]},"Insert Msg":{"main":[[]]},"Fetch AI Settings":{"main":[[{"node":"AI Routing Decision","type":"main","index":0}]]},"AI Routing Decision":{"main":[[{"node":"If Pause AI?","type":"main","index":0},{"node":"If Run AI?","type":"main","index":0}]]},"If Pause AI?":{"main":[[{"node":"Pause Contact AI","type":"main","index":0}],[]]},"If Run AI?":{"main":[[{"node":"Fetch Conversation History","type":"main","index":0}],[]]},"Fetch Conversation History":{"main":[[{"node":"Format Prompt & History","type":"main","index":0}]]},"Format Prompt & History":{"main":[[{"node":"Call OpenAI API","type":"main","index":0}]]},"Call OpenAI API":{"main":[[{"node":"Extract AI Answer","type":"main","index":0}]]},"Extract AI Answer":{"main":[[{"node":"Send AI Response","type":"main","index":0}]]}},"settings":{}}
+{
+  "name": "Instagram – Inbound Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "instagram",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5db0bba3-5b13-43a3-9d1a-c6d8bedd625d",
+      "name": "Verify GET",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "instagram",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "55c01a1e-98d7-494f-9d3f-d69fc207f82e",
+      "name": "Message POST",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query?.['hub.challenge'] || '' }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f494f262-15a9-40b9-a166-cedea7f2ddea",
+      "name": "Respond Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        460,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"ok\"\n}",
+        "options": {}
+      },
+      "id": "ec8e7a27-5181-4fdb-b9d6-63b7866adc7d",
+      "name": "Instant Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        460,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nif (!body.entry || !body.entry[0]) {\n  return [{ json: { skip: true, reason: 'No entry in payload' } }];\n}\n\nconst entry = body.entry[0];\nconst messaging = entry.messaging?.[0];\n\nif (!messaging || !messaging.message) {\n  return [{ json: { skip: true, reason: 'No message in payload' } }];\n}\n\nconst message = messaging.message;\nconst senderId = messaging.sender?.id; \nconst recipientId = messaging.recipient?.id; \nconst msgId = message.mid || message.item_id;\nconst timestamp = messaging.timestamp; \nconst text = message.text || '';\nconst attachments = message.attachments;\n\nlet content = text;\nlet type = 'text';\nlet mediaUrl = null;\n\nif (attachments && attachments.length > 0) {\n  type = attachments[0].type; \n  mediaUrl = attachments[0].payload?.url;\n  if (!content) {\n    if (type === 'image') content = '[Imagem]';\n    else if (type === 'video') content = '[Vídeo]';\n    else if (type === 'audio') content = '[Áudio]';\n    else content = '[Mídia]';\n  }\n}\n\nreturn [{\n  json: JSON.parse(JSON.stringify({\n    whatsapp_msg_id: msgId || null,\n    phone: senderId || null,\n    contact_name: \"IG User \" + senderId, \n    direction: 'in',\n    content: content || null,\n    content_type: type || null,\n    media_url: mediaUrl || null,\n    timestamp: timestamp ? new Date(parseInt(timestamp)).toISOString() : null,\n    raw_payload: body,\n    source: \"instagram\"\n  }))\n}];"
+      },
+      "id": "c20a907f-54a3-4896-865c-9fbc3c858eb9",
+      "name": "Parse Instagram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        680,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.skip }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "4675a7ac-7e35-46ac-90fc-a0dba5d553a4",
+      "name": "Has Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        880,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v20.0/{{ $json.phone }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "name,username,profile_pic"
+            },
+            {
+              "name": "access_token",
+              "value": "EAAOFwaqMDFoBRjHuckGTPEUMNxmvRjZCAvbT3eW9XWShRVkFMv1gGGaQ2FHF0A0VzL4xtZCEMwnKHTtK9fFMCdixmrUUM8HwOTusRObxXVnLWZBKMNJB5QlXoZBQNsLo6umPdBnyU1jkqPrK9IELxQUtzBDBw1QVKJePerVoMMHvpq4EOyTxbZCHSpp1qQZBteU9By3iQZD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9ff14c7f-2cca-44e2-af9f-3aa4a762d35d",
+      "name": "Fetch IG Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1100,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/contacts?on_conflict=phone",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates,return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"phone\": \"{{ $json.id }}\",\n  \"name\": \"{{ $json.name ? $json.name + ' | @' + $json.username : $json.username }}\"\n}",
+        "options": {}
+      },
+      "id": "e2c8211a-4575-4b84-9314-ef3441021e4a",
+      "name": "Upsert Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1320,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "channel_id",
+              "value": "15d09eea-b9b9-42f5-8231-8248dbb5fe7a"
+            },
+            {
+              "name": "contact_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "direction",
+              "value": "in"
+            },
+            {
+              "name": "content",
+              "value": "={{ $('Parse Instagram').item.json.content }}"
+            },
+            {
+              "name": "content_type",
+              "value": "={{ $('Parse Instagram').item.json.content_type }}"
+            },
+            {
+              "name": "media_url",
+              "value": "={{ $('Parse Instagram').item.json.media_url }}"
+            },
+            {
+              "name": "whatsapp_msg_id",
+              "value": "={{ $('Parse Instagram').item.json.whatsapp_msg_id }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $('Parse Instagram').item.json.timestamp }}"
+            }
+          ]
+        }
+      },
+      "id": "6196f76e-ddbd-4897-982a-519a7cb6660a",
+      "name": "Insert Msg",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1540,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/ai_settings?limit=1",
+        "sendHeaders": true,
+        "options": {},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            }
+          ]
+        }
+      },
+      "id": "6dac0cc8-636f-4daf-a1ac-42d46a50d841",
+      "name": "Fetch AI Settings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst settings = $('Fetch AI Settings').first()?.json;\nif (!settings) {\n  return [{ json: { run_ai: false, reason: 'No settings found' } }];\n}\n\n// Retrieve contact tags\nlet contact = {};\ntry {\n  contact = $('Upsert Contact').first().json;\n} catch(e) {\n  try {\n    contact = $input.first().json; // fallback\n  } catch(err) {}\n}\n\nconst tags = contact.tags || [];\nconst isPausedByTag = tags.includes('IA Inativa');\n\n// Read columns directly from Supabase settings row\nconst isEnabledGlobal = settings.is_enabled === true;\nconst systemPrompt = settings.system_prompt || '';\nconst negativePrompt = settings.negative_prompt || '';\nconst apiKey = settings.api_key || '';\nconst model = settings.model || 'gpt-4o-mini';\nconst temperature = settings.temperature ?? 0.7;\n\n// Find message info dynamically\nlet msgText = '';\nlet direction = 'in';\nlet phone = contact.phone || '';\n\ntry {\n  const parsed = $('Parse Instagram').first().json;\n  msgText = parsed.content || '';\n  direction = parsed.direction || 'in';\n  if (!phone) phone = parsed.phone || '';\n} catch(e) {}\n\nconst isInbound = direction === 'in';\n\n// Check pause trigger phrases\nconst pausePhrases = settings.pause_trigger_phrases || [];\nconst matchedPhrase = pausePhrases.find(p => msgText.toLowerCase().includes(p.toLowerCase()));\n\nlet pauseBot = false;\nlet runAi = false;\nlet reason = '';\n\nif (!isEnabledGlobal) {\n  reason = 'AI is disabled globally';\n} else if (!isInbound) {\n  reason = 'Message is outbound';\n} else if (isPausedByTag) {\n  reason = 'AI is paused for this contact (IA Inativa tag present)';\n} else if (matchedPhrase) {\n  pauseBot = true;\n  reason = `AI paused by trigger phrase: \"${matchedPhrase}\"`;\n} else {\n  runAi = true;\n  reason = 'All checks passed, running AI';\n}\n\nconst updatedTags = isPausedByTag ? tags : [...tags, 'IA Inativa'];\n\nreturn [{\n  json: {\n    run_ai: runAi,\n    pause_bot: pauseBot,\n    reason: reason,\n    contact_id: contact.id,\n    phone: phone,\n    user_message: msgText,\n    system_prompt: systemPrompt,\n    negative_prompt: negativePrompt,\n    api_key: apiKey,\n    model: model,\n    temperature: temperature,\n    updated_tags: updatedTags\n  }\n}];\n"
+      },
+      "id": "a14f6358-7b39-4963-8bf1-f0d7f7e36348",
+      "name": "AI Routing Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.pause_bot }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "83f4ac8b-d787-4879-be08-d1b5bc0f9f3a",
+      "name": "If Pause AI?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2500,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/contacts?id=eq.{{ $json.contact_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"tags\": {{ JSON.stringify($json.updated_tags) }} }",
+        "options": {}
+      },
+      "id": "ee6c2ec0-bdb2-4e71-a489-7edf682c0f25",
+      "name": "Pause Contact AI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2700,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.run_ai }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "ab5ff5ac-7b58-4935-9ac5-1e0db11340f9",
+      "name": "If Run AI?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2500,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/messages?contact_id=eq.{{ $json.contact_id }}&order=timestamp.desc&limit=10",
+        "sendHeaders": true,
+        "options": {},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            }
+          ]
+        }
+      },
+      "id": "e6e35f54-297c-4320-9fdd-913810dc7248",
+      "name": "Fetch Conversation History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2700,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msgs = $input.all().map(item => item.json);\nconst inboundMsgs = msgs.filter(m => m.direction === 'in');\nconst routerData = $('AI Routing Decision').first().json;\nconst welcomeMessage = routerData.welcome_message || '';\n\nif (inboundMsgs.length <= 1 && welcomeMessage.trim() !== '') {\n  return [{\n    json: {\n      is_welcome: true,\n      contact_id: routerData.contact_id,\n      phone: routerData.phone,\n      channel_id: routerData.channel_id,\n      content: welcomeMessage\n    }\n  }];\n}\n\nmsgs.reverse();\n\nconst historyText = msgs.map(m => {\n  const role = m.direction === 'in' ? 'USER' : 'ASSISTANT';\n  return `${role}: ${m.content || ''}`;\n}).join('\\n\\n');\n\nconst systemContent = `${routerData.system_prompt}\\n\\nRESTRISÇÕES IMPORTANTES (O QUE NUNCA FAZER):\\n${routerData.negative_prompt}`;\n\nconst systemMessage = `${systemContent}\\n\\nCONVERSATION HISTORY:\\n${historyText}`;\n\nreturn [{\n  json: {\n    is_welcome: false,\n    api_key: routerData.api_key,\n    model: routerData.model,\n    temperature: routerData.temperature,\n    chatInput: routerData.user_message,\n    systemMessage: systemMessage,\n    contact_id: routerData.contact_id,\n    phone: routerData.phone,\n    channel_id: routerData.channel_id\n  }\n}];"
+      },
+      "id": "926d067b-a898-4253-b93e-c1f5f3e24b21",
+      "name": "Format Prompt & History",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2900,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nconst answer = resp.output || resp.text || resp.content || JSON.stringify(resp);\nconst inputData = $('Format Prompt & History').first().json;\nreturn [{\n  json: {\n    contact_id: inputData.contact_id,\n    phone: inputData.phone,\n    channel_id: inputData.channel_id,\n    content: answer\n  }\n}];"
+      },
+      "id": "85825a20-6b67-4add-ae72-2bde0dc92f06",
+      "name": "Extract AI Answer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3300,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n-n8n.rh3fr2.easypanel.host/webhook/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"channel_id\": \"{{ $json.channel_id }}\", \"contact_id\": \"{{ $json.contact_id }}\", \"phone\": \"{{ $json.phone }}\", \"content\": \"{{ $json.content }}\"}",
+        "options": {}
+      },
+      "id": "1001cffb-fc62-4ef6-9ffd-918361394c76",
+      "name": "Send AI Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        3500,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "={{ $json.systemMessage }}\n\nIMPORTANT TOOL RULES: Para mover o lead para 'won', é OBRIGATÓRIO haver um agendamento concreto (data e hora aceitos pelo lead). Confirmações genéricas não são suficientes."
+        }
+      },
+      "id": "agent-824lx",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1400,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "={{ $('Format Prompt & History').first().json.model || 'gpt-4o-mini' }}",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": "={{ $('Format Prompt & History').first().json.temperature || 0.7 }}"
+        }
+      },
+      "id": "model-hxlzdo",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1300,
+        600
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "pnuusAYVVpBuDVbK",
+          "name": "OpenAI account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "atualizar_funil_vendas",
+        "description": "Atualiza o estágio do lead no funil de vendas (pipeline_stage). OBRIGATÓRIO: só mova para 'won' se houver agendamento concreto de data e hora.",
+        "method": "PATCH",
+        "url": "=https://ibyterftfrqgkhktkaeg.supabase.co/rest/v1/contacts?id=eq.{{ $('AI Routing Decision').first().json.contact_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieXRlcmZ0ZnJxZ2toa3RrYWVnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQ0OTgwMywiZXhwIjoyMDk0MDI1ODAzfQ.9ObjlZum0x9XQuZYVxBZJGzLKA_jbaz1wqxC4lMj_M8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"pipeline_stage\": \"{{ $fromAI('pipeline_stage', 'Estágio do funil: new, contacted, proposal, won, lost', 'string') }}\"}",
+        "options": {}
+      },
+      "id": "tool-93y2zs",
+      "name": "Atualizar Funil",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1500,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Verify GET": {
+      "main": [
+        [
+          {
+            "node": "Respond Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message POST": {
+      "main": [
+        [
+          {
+            "node": "Instant Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parse Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instant Response": {
+      "main": [
+        []
+      ]
+    },
+    "Parse Instagram": {
+      "main": [
+        [
+          {
+            "node": "Has Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Message?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Fetch IG Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Contact": {
+      "main": [
+        [
+          {
+            "node": "Insert Msg",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch IG Profile": {
+      "main": [
+        [
+          {
+            "node": "Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Msg": {
+      "main": [
+        []
+      ]
+    },
+    "Fetch AI Settings": {
+      "main": [
+        [
+          {
+            "node": "AI Routing Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Routing Decision": {
+      "main": [
+        [
+          {
+            "node": "If Pause AI?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Run AI?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Pause AI?": {
+      "main": [
+        [
+          {
+            "node": "Pause Contact AI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "If Run AI?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Conversation History",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Fetch Conversation History": {
+      "main": [
+        [
+          {
+            "node": "Format Prompt & History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Prompt & History": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract AI Answer": {
+      "main": [
+        [
+          {
+            "node": "Send AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Extract AI Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Funil": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {}
+}
