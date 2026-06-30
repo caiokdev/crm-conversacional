@@ -684,16 +684,36 @@ export const CrmProvider = ({ children }) => {
   const toggleTheme = () => setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
 
   const changeContactStatus = async (contactId, newStatus) => {
-    setContacts(prev => prev.map(c => (c.id === contactId ? { ...c, status: newStatus } : c)));
+    let updatedTags = null;
+    setContacts(prev => prev.map(c => {
+      if (c.id === contactId) {
+        let tags = c.tags || [];
+        if ((newStatus === 'won' || newStatus === 'lost') && !tags.includes('IA Inativa')) {
+          updatedTags = [...tags, 'IA Inativa'];
+          return { ...c, status: newStatus, tags: updatedTags };
+        }
+        return { ...c, status: newStatus };
+      }
+      return c;
+    }));
+
     const meta = JSON.parse(localStorage.getItem('crm_contacts_metadata') || '{}');
     if (!meta[contactId]) meta[contactId] = {};
     meta[contactId].status = newStatus;
+    
+    if (updatedTags) {
+      meta[contactId].tags = updatedTags;
+    }
     localStorage.setItem('crm_contacts_metadata', JSON.stringify(meta));
+
     if (contactId && contactId.toString().includes('-')) {
       try {
         await SupabaseService.updateContactStatus(contactId, newStatus);
+        if (updatedTags) {
+          await SupabaseService.updateContactTags(contactId, updatedTags);
+        }
       } catch (e) {
-        console.error("[CrmContext] Error updating contact status in database:", e);
+        console.error("[CrmContext] Error updating contact status/tags in database:", e);
       }
     }
   };

@@ -328,7 +328,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"pipeline_stage\": \"{{ $fromAI('pipeline_stage', 'Estágio do funil: new, contacted, proposal, won, lost', 'string') }}\"}",
+        "jsonBody": "={\"pipeline_stage\": \"{{ $fromAI('pipeline_stage', 'Estágio do funil: new, contacted, proposal, won, lost', 'string') }}\"{{ ['won', 'lost'].includes($fromAI('pipeline_stage')) ? ', \\\"tags\\\": ' + JSON.stringify(Array.from(new Set([...(typeof $('Fetch Contact').first().json.tags === 'string' ? JSON.parse($('Fetch Contact').first().json.tags) : ($('Fetch Contact').first().json.tags || [])), 'IA Inativa']))) : '' }}}",
         "options": {}
       },
       "id": "tool-z862im",
