@@ -207,7 +207,9 @@ CREATE OR REPLACE FUNCTION public.create_policy_safe(polname TEXT, tblname TEXT,
 RETURNS VOID AS $$
 BEGIN
     EXECUTE format('DROP POLICY IF EXISTS %I ON %I', polname, tblname);
-    IF check_expr IS NOT NULL THEN
+    IF op = 'INSERT' THEN
+        EXECUTE format('CREATE POLICY %I ON %I FOR INSERT TO %s WITH CHECK (%s)', polname, tblname, array_to_string(roles, ','), check_expr);
+    ELSIF check_expr IS NOT NULL THEN
         EXECUTE format('CREATE POLICY %I ON %I FOR %s TO %s USING (%s) WITH CHECK (%s)', polname, tblname, op, array_to_string(roles, ','), using_expr, check_expr);
     ELSE
         EXECUTE format('CREATE POLICY %I ON %I FOR %s TO %s USING (%s)', polname, tblname, op, array_to_string(roles, ','), using_expr);
