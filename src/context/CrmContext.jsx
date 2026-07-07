@@ -1152,7 +1152,7 @@ export const CrmProvider = ({ children }) => {
               if (activeC.provider === 'evolution') return ch.provider === 'evolution';
               return ch.provider === 'meta' || ch.provider === 'meta_cloud';
             });
-            channelId = matchedChannel ? matchedChannel.id : META_CHANNEL_ID;
+            channelId = matchedChannel ? matchedChannel.id : (channels[0]?.id || META_CHANNEL_ID);
           }
 
           await N8nService.sendOutboundMessage(
