@@ -989,7 +989,7 @@ export default function ChatWindow() {
                 <div className="note-date">{note.date}</div>
               </div>
             ))}
-            {activeContact.notes.length === 0 && (
+            {(activeContact.notes || []).length === 0 && (
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', display: 'block', padding: '12px' }}>
                 Nenhuma anotação registrada ainda.
               </span>
