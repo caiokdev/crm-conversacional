@@ -28,3 +28,5 @@ exec.json
 workflows.json
 outbound.json
 upload_payload.json
+.vercel
+.env*
