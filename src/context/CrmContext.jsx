@@ -406,7 +406,7 @@ export const CrmProvider = ({ children }) => {
           exists = true;
           
           // 1. Evita duplicados por ID real
-          if (newMsg.id && c.messages.some(m => m.id === newMsg.id)) {
+          if (newMsg.id && c.messages && c.messages.some(m => m.id === newMsg.id)) {
             return c;
           }
 

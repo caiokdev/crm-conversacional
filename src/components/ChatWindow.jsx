@@ -398,7 +398,7 @@ export default function ChatWindow() {
 
         {/* MESSAGES VIEW */}
         <div className="messages-scroller" ref={scrollRef}>
-          {activeContact.messages.map(msg => (
+          {(activeContact.messages || []).map(msg => (
             <div key={msg.id} className={`message-bubble-wrapper ${msg.sender}`}>
               <div className="message-bubble">
                 {msg.content_type === 'image' ? (
@@ -417,14 +417,14 @@ export default function ChatWindow() {
                       <div className="media-error-fallback" style={{ display: 'none', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px dashed var(--border-glass)', color: 'var(--text-secondary)', marginBottom: '8px' }}>
                         <XCircle size={16} /> Mídia indisponível
                       </div>
-                      {msg.text && msg.text !== '[Imagem]' && <div>{msg.text}</div>}
+                      {msg.text && msg.text !== '[Imagem]' && <div>{typeof msg.text === 'string' ? msg.text : JSON.stringify(msg.text)}</div>}
                     </div>
                   ) : (
                     <div style={{ marginBottom: '8px' }}>
                       <div className="media-error-fallback" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px dashed var(--border-glass)', color: 'var(--text-secondary)', marginBottom: '8px' }}>
                         <XCircle size={16} /> Mídia indisponível
                       </div>
-                      {msg.text && msg.text !== '[Imagem]' && <div>{msg.text}</div>}
+                      {msg.text && msg.text !== '[Imagem]' && <div>{typeof msg.text === 'string' ? msg.text : JSON.stringify(msg.text)}</div>}
                     </div>
                   )
                 ) : msg.content_type === 'sticker' && msg.media_url ? (
@@ -448,14 +448,14 @@ export default function ChatWindow() {
                   msg.media_url ? (
                     <div>
                       <video src={msg.media_url} controls style={{ maxWidth: '280px', borderRadius: '8px', display: 'block', marginBottom: '8px' }} />
-                      {msg.text && msg.text !== '[Vídeo]' && <div>{msg.text}</div>}
+                      {msg.text && msg.text !== '[Vídeo]' && <div>{typeof msg.text === 'string' ? msg.text : JSON.stringify(msg.text)}</div>}
                     </div>
                   ) : (
                     <div style={{ marginBottom: '8px' }}>
                       <div className="media-error-fallback" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px dashed var(--border-glass)', color: 'var(--text-secondary)', marginBottom: '8px' }}>
                         <XCircle size={16} /> Vídeo não disponível
                       </div>
-                      {msg.text && msg.text !== '[Vídeo]' && <div>{msg.text}</div>}
+                      {msg.text && msg.text !== '[Vídeo]' && <div>{typeof msg.text === 'string' ? msg.text : JSON.stringify(msg.text)}</div>}
                     </div>
                   )
                 ) : msg.content_type === 'document' && msg.media_url ? (
@@ -467,11 +467,16 @@ export default function ChatWindow() {
                       style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)', textDecoration: 'underline' }}
                     >
                       <FileText size={14} strokeWidth={2.5} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
-                      {msg.text || 'Documento'}
+                      {typeof msg.text === 'string' ? msg.text : (msg.text ? JSON.stringify(msg.text) : 'Documento')}
                     </a>
                   </div>
                 ) : (
-                  msg.text
+                  typeof msg.text === 'string' ? msg.text.split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      <br />
+                    </React.Fragment>
+                  )) : (msg.text ? JSON.stringify(msg.text) : '')
                 )}
               </div>
               <div className="message-meta-row">
