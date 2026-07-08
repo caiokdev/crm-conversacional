@@ -348,7 +348,7 @@ export const CrmProvider = ({ children }) => {
           }
         }
 
-        setContacts(prev => prev.map(c => {
+        setContacts(prev => (prev || []).map(c => {
           if (c.id === activeContactId) {
             return {
               ...c,
@@ -480,7 +480,7 @@ export const CrmProvider = ({ children }) => {
               const existing = prev2.find(c => c.id === mappedFreshC.id);
               if (existing) {
                 if (existing.name === 'Novo Contato') {
-                   return prev2.map(c => c.id === mappedFreshC.id ? { ...mappedFreshC, messages: c.messages, provider: resolvedProvider, channel: resolvedChannel, unread: true } : c);
+                   return (prev2 || []).map(c => c.id === mappedFreshC.id ? { ...mappedFreshC, messages: c.messages, provider: resolvedProvider, channel: resolvedChannel, unread: true } : c);
                 }
                 return prev2;
               }
@@ -549,7 +549,7 @@ export const CrmProvider = ({ children }) => {
           const updatedContact = payload.new;
           console.log('[Supabase Realtime] Contact update received:', updatedContact);
           
-          setContacts(prev => prev.map(c => {
+          setContacts(prev => (prev || []).map(c => {
             if (c.id === updatedContact.id) {
               const meta = JSON.parse(localStorage.getItem('crm_contacts_metadata') || '{}');
               const contactMeta = meta[updatedContact.id] || {};
@@ -584,9 +584,9 @@ export const CrmProvider = ({ children }) => {
                 name: displayName,
                 username: username || c.username,
                 // Preserva propriedades críticas da interface de UI / em memória após o spread
-                messages: c.messages ?? [],
+                messages: c.messages || [],
                 notes: parsedNotes,
-                tags: Array.isArray(updatedContact.tags) ? updatedContact.tags : (c.tags ?? []),
+                tags: Array.isArray(updatedContact.tags) ? updatedContact.tags : (c.tags || []),
                 status: updatedContact.pipeline_stage ?? c.status,
                 value: updatedContact.value !== undefined ? updatedContact.value : c.value
               };
@@ -758,7 +758,7 @@ export const CrmProvider = ({ children }) => {
     if (!chan) return;
     const newStatus = chan.status === 'connected' ? 'disconnected' : 'connected';
 
-    setChannels(prev => prev.map(c => (c.id === id ? { ...c, status: newStatus } : c)));
+    setChannels(prev => (prev || []).map(c => (c.id === id ? { ...c, status: newStatus } : c)));
 
     if (id && id.toString().includes('-')) {
       try {
@@ -796,7 +796,7 @@ export const CrmProvider = ({ children }) => {
 
   const changeContactStatus = async (contactId, newStatus) => {
     let updatedTags = null;
-    setContacts(prev => prev.map(c => {
+    setContacts(prev => (prev || []).map(c => {
       if (c.id === contactId) {
         let tags = c.tags || [];
         if ((newStatus === 'won' || newStatus === 'lost') && !tags.includes('IA Inativa')) {
@@ -842,7 +842,7 @@ export const CrmProvider = ({ children }) => {
     };
     const updatedNotes = [...(contact.notes || []), newNote];
 
-    setContacts(prev => prev.map(c => (c.id === contactId ? { ...c, notes: updatedNotes } : c)));
+    setContacts(prev => (prev || []).map(c => (c.id === contactId ? { ...c, notes: updatedNotes } : c)));
 
     const meta = JSON.parse(localStorage.getItem('crm_contacts_metadata') || '{}');
     if (!meta[contactId]) meta[contactId] = {};
@@ -866,7 +866,7 @@ export const CrmProvider = ({ children }) => {
   };
 
   const updateContactTags = async (contactId, tags) => {
-    setContacts(prev => prev.map(c => (c.id === contactId ? { ...c, tags } : c)));
+    setContacts(prev => (prev || []).map(c => (c.id === contactId ? { ...c, tags } : c)));
     const meta = JSON.parse(localStorage.getItem('crm_contacts_metadata') || '{}');
     if (!meta[contactId]) meta[contactId] = {};
     meta[contactId].tags = tags;
@@ -943,7 +943,7 @@ export const CrmProvider = ({ children }) => {
         if (error) throw error;
         
         // Update local state for contacts immediately to prevent UI lag/flicker
-        setContacts(prev => prev.map(c => {
+        setContacts(prev => (prev || []).map(c => {
           if (c.tags && c.tags.includes(cleanedOld)) {
             // Replace oldName with newName and deduplicate
             const filtered = c.tags.map(t => t === cleanedOld ? cleanedNew : t);
@@ -992,7 +992,7 @@ export const CrmProvider = ({ children }) => {
       if (error) throw error;
 
       // 4. Update local state for contacts immediately to prevent UI lag/flicker
-      setContacts(prev => prev.map(c => {
+      setContacts(prev => (prev || []).map(c => {
         if (c.tags && c.tags.includes(cleanedName)) {
           const filtered = c.tags.filter(t => t !== cleanedName);
           
@@ -1019,7 +1019,7 @@ export const CrmProvider = ({ children }) => {
 
   const updateContactName = async (contactId, name) => {
     if (!name.trim()) return;
-    setContacts(prev => prev.map(c => (c.id === contactId ? { ...c, name } : c)));
+    setContacts(prev => (prev || []).map(c => (c.id === contactId ? { ...c, name } : c)));
     const meta = JSON.parse(localStorage.getItem('crm_contacts_metadata') || '{}');
     if (!meta[contactId]) meta[contactId] = {};
     meta[contactId].name = name;
@@ -1035,7 +1035,7 @@ export const CrmProvider = ({ children }) => {
 
   const updateContactValue = async (contactId, value) => {
     const valNum = Number(value) || 0;
-    setContacts(prev => prev.map(c => (c.id === contactId ? { ...c, value: valNum } : c)));
+    setContacts(prev => (prev || []).map(c => (c.id === contactId ? { ...c, value: valNum } : c)));
     
     // Remover o valor do localStorage para usar apenas a DB
     const meta = JSON.parse(localStorage.getItem('crm_contacts_metadata') || '{}');
@@ -1139,7 +1139,7 @@ export const CrmProvider = ({ children }) => {
       status: sender === 'agent' ? 'sending' : 'received'
     });
 
-    setContacts(prev => prev.map(c => {
+    setContacts(prev => (prev || []).map(c => {
       if (c.id === contactId) {
         return { ...c, messages: [...c.messages, newMessage], unread: sender === 'client' };
       }
@@ -1176,7 +1176,7 @@ export const CrmProvider = ({ children }) => {
           );
 
           // Mark as sent
-          setContacts(prev => prev.map(c => {
+          setContacts(prev => (prev || []).map(c => {
             if (c.id === contactId) {
               return {
                 ...c,
@@ -1188,7 +1188,7 @@ export const CrmProvider = ({ children }) => {
         } catch (e) {
           console.error("Failed sending outbound msg:", e);
           // Mark as failed
-          setContacts(prev => prev.map(c => {
+          setContacts(prev => (prev || []).map(c => {
             if (c.id === contactId) {
               return {
                 ...c,
@@ -1215,8 +1215,8 @@ export const CrmProvider = ({ children }) => {
 
   const activeContact = sortedContacts.find(c => c.id === activeContactId) || sortedContacts[0];
 
-  const updateNodePosition = (id, dx, dy) => setFlowNodes(prev => prev.map(n => (n.id === id ? { ...n, x: n.x + dx, y: n.y + dy } : n)));
-  const updateNodeData = (id, field, value) => setFlowNodes(prev => prev.map(n => (n.id === id ? { ...n, data: { ...n.data, [field]: value } } : n)));
+  const updateNodePosition = (id, dx, dy) => setFlowNodes(prev => (prev || []).map(n => (n.id === id ? { ...n, x: n.x + dx, y: n.y + dy } : n)));
+  const updateNodeData = (id, field, value) => setFlowNodes(prev => (prev || []).map(n => (n.id === id ? { ...n, data: { ...n.data, [field]: value } } : n)));
   const addFlowNode = (type) => {
     const id = (flowNodes.length + 1).toString();
     let label = 'Novo Bloco'; let defaultData = {};

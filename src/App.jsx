@@ -22,6 +22,7 @@ import ChannelsConfig from './components/ChannelsConfig';
 import FollowUpSettings from './components/FollowUpSettings';
 import OpenAIStatusBanner from './components/OpenAIStatusBanner';
 import CalendarView from './components/CalendarView';
+import GlobalErrorBoundary from './components/GlobalErrorBoundary';
 
 function AppContent() {
   const { activeScreen } = useCrm();
@@ -70,8 +71,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <CrmProvider>
-      <AppContent />
-    </CrmProvider>
+    <GlobalErrorBoundary>
+      <CrmProvider>
+        <AppContent />
+      </CrmProvider>
+    </GlobalErrorBoundary>
   );
 }
