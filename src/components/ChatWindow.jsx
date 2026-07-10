@@ -419,7 +419,12 @@ export default function ChatWindow() {
                       activeContact.channel === 'webchat' ? 'Tiktok' : activeContact.channel}
                 </span>
                 <span className={`tag status-${activeContact.status}`}>
-                  {activeContact.status}
+                  {activeContact.status === 'new' && 'Novo Lead'}
+                  {activeContact.status === 'contacted' && 'Em Contato'}
+                  {activeContact.status === 'no_answer' && 'Sem Resposta'}
+                  {activeContact.status === 'proposal' && 'Tem Interesse'}
+                  {activeContact.status === 'won' && 'Vendido'}
+                  {activeContact.status === 'lost' && 'Perdido'}
                 </span>
               </div>
             </div>
@@ -633,7 +638,14 @@ export default function ChatWindow() {
               ) : activeContact.channel === 'telegram' ? 'Instagram' :
                   activeContact.channel === 'webchat' ? 'Tiktok' : activeContact.channel}
             </span>
-            <span className={`tag status-${activeContact.status}`}>{activeContact.status}</span>
+            <span className={`tag status-${activeContact.status}`}>
+              {activeContact.status === 'new' && 'Novo Lead'}
+              {activeContact.status === 'contacted' && 'Em Contato'}
+              {activeContact.status === 'no_answer' && 'Sem Resposta'}
+              {activeContact.status === 'proposal' && 'Tem Interesse'}
+              {activeContact.status === 'won' && 'Vendido'}
+              {activeContact.status === 'lost' && 'Perdido'}
+            </span>
           </div>
         </div>
 
