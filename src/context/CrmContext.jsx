@@ -317,7 +317,9 @@ export const CrmProvider = ({ children }) => {
 
       try {
         console.log(`[CRM] Secured debounced fetch triggered for contact_id: ${contact.id}`);
-        await fetch('https://n8n-n8n.rh3fr2.easypanel.host/webhook/fetch-profile-photo', {
+        const n8nUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n-n8n.rh3fr2.easypanel.host';
+        const photoPath = import.meta.env.VITE_N8N_PROFILE_PHOTO_PATH || '/webhook/fetch-profile-photo';
+        await fetch(`${n8nUrl}${photoPath}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contact_id: contact.id })
