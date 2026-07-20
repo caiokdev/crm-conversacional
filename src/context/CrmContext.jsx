@@ -34,6 +34,44 @@ const normalizeMessage = (rawMsg) => {
   };
 };
 
+const playNotificationChime = () => {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+  } catch (e) {}
+};
+
+const sendPrivacyNotification = (contactName) => {
+  if (typeof Notification === 'undefined') return;
+  if (Notification.permission === 'granted') {
+    try {
+      new Notification("Nova mensagem recebida", {
+        body: `Você recebeu uma nova mensagem de ${contactName || 'um contato'}.`,
+        icon: '/favicon.ico',
+        tag: 'crm-new-message-privacy'
+      });
+    } catch (e) {}
+  } else if (Notification.permission !== 'denied') {
+    try { Notification.requestPermission(); } catch (e) {}
+  }
+};
+
 export const CrmProvider = ({ children }) => {
   const [activeScreen, setActiveScreen] = useState(() => {
     return localStorage.getItem('crm_active_screen') || 'dashboard';
@@ -433,6 +471,13 @@ export const CrmProvider = ({ children }) => {
         resolvedProvider = 'evolution';
         resolvedChannel = 'whatsapp';
       }
+    }
+
+    // Trigger privacy-compliant sound & desktop notification for incoming client messages
+    if (newMsg.sender === 'client') {
+      playNotificationChime();
+      const matchedContact = (contactsRef.current || []).find(c => c.id === newMsg.contact_id);
+      sendPrivacyNotification(matchedContact?.name);
     }
 
     setContacts(prev => {

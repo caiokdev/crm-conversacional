@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause, Volume2 } from 'lucide-react';
 
+const SPEEDS = [1, 1.25, 1.5, 2];
+
 export default function AudioPlayer({ src }) {
   const audioRef = useRef(null);
   const progressRef = useRef(null);
@@ -8,6 +10,7 @@ export default function AudioPlayer({ src }) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [speed, setSpeed] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [waveformBars] = useState(() =>
@@ -25,9 +28,12 @@ export default function AudioPlayer({ src }) {
     const audio = audioRef.current;
     if (!audio) return;
 
+    audio.playbackRate = speed;
+
     const onLoadedMetadata = () => {
       setDuration(audio.duration);
       setHasError(false);
+      audio.playbackRate = speed;
     };
     const onTimeUpdate = () => {
       if (!isDragging) {
@@ -48,13 +54,28 @@ export default function AudioPlayer({ src }) {
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
     };
-  }, [isDragging]);
+  }, [isDragging, speed]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (isPlaying) { audio.pause(); } else { audio.play(); }
+    if (isPlaying) { 
+      audio.pause(); 
+    } else { 
+      audio.playbackRate = speed;
+      audio.play(); 
+    }
     setIsPlaying(!isPlaying);
+  };
+
+  const cycleSpeed = (e) => {
+    e.stopPropagation();
+    const currentIndex = SPEEDS.indexOf(speed);
+    const nextSpeed = SPEEDS[(currentIndex + 1) % SPEEDS.length];
+    setSpeed(nextSpeed);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = nextSpeed;
+    }
   };
 
   const handleProgressClick = useCallback((e) => {
@@ -153,7 +174,7 @@ export default function AudioPlayer({ src }) {
           })}
         </div>
 
-        {/* Time display */}
+        {/* Time display & Speed Button */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -168,17 +189,40 @@ export default function AudioPlayer({ src }) {
           }}>
             {hasError ? '--:--' : formatTime(currentTime)}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Volume2 size={10} strokeWidth={2} color="rgba(139, 92, 246, 0.6)" />
-            <span style={{
-              fontSize: '10px',
-              fontWeight: '500',
-              color: 'var(--text-secondary, #94a3b8)',
-              fontFamily: "'Inter', sans-serif",
-              letterSpacing: '0.3px',
-            }}>
-              {formatTime(duration)}
-            </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              onClick={cycleSpeed}
+              type="button"
+              title="Velocidade de reprodução"
+              style={{
+                background: 'rgba(139, 92, 246, 0.2)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                color: '#a78bfa',
+                fontSize: '10px',
+                fontWeight: '700',
+                padding: '1px 5px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                lineHeight: '1.2'
+              }}
+            >
+              {speed}x
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <Volume2 size={10} strokeWidth={2} color="rgba(139, 92, 246, 0.6)" />
+              <span style={{
+                fontSize: '10px',
+                fontWeight: '500',
+                color: 'var(--text-secondary, #94a3b8)',
+                fontFamily: "'Inter', sans-serif",
+                letterSpacing: '0.3px',
+              }}>
+                {formatTime(duration)}
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 const N8N_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || '';
 const OUTBOUND_PATH = import.meta.env.VITE_N8N_OUTBOUND_PATH || '/webhook/send';
 const OUTBOUND_MEDIA_PATH = import.meta.env.VITE_N8N_OUTBOUND_MEDIA_PATH || '/webhook/send-media';
+const CHECK_OPENAI_QUOTA_PATH = import.meta.env.VITE_N8N_CHECK_OPENAI_QUOTA_PATH || '/webhook/check-openai-quota';
 
 class N8nService {
   static async sendOutboundMessage(channelId, contactId, phone, content) {
@@ -54,6 +55,31 @@ class N8nService {
 
     return { success: true };
   }
+
+  static async checkOpenAIQuota(channelId) {
+    if (!N8N_URL || !channelId) {
+      return { status: 'no_key' };
+    }
+
+    try {
+      const response = await fetch(`${N8N_URL}${CHECK_OPENAI_QUOTA_PATH}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel_id: channelId })
+      });
+
+      if (!response.ok) {
+        return { status: 'unknown' };
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (e) {
+      console.error('[N8nService] checkOpenAIQuota error:', e);
+      return { status: 'unknown' };
+    }
+  }
 }
 
 export default N8nService;
+
