@@ -74,8 +74,31 @@ export const CrmProvider = ({ children }) => {
   const lastSoundTimeRef = useRef(0);
   const audioCtxRef = useRef(null);
 
+  // Auto-unlock AudioContext on first user interaction (click, keydown, touchstart, pointerdown)
+  useEffect(() => {
+    const unlockAudio = () => {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new AudioCtx();
+        }
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume().catch(() => {});
+        }
+      } catch (e) {}
+    };
+
+    const events = ['click', 'keydown', 'touchstart', 'pointerdown'];
+    events.forEach(evt => window.addEventListener(evt, unlockAudio, { once: true }));
+
+    return () => {
+      events.forEach(evt => window.removeEventListener(evt, unlockAudio));
+    };
+  }, []);
+
   // Web Audio API Discrete Sound Chime (Throttled max 1 sound per 3s)
-  const playNotificationChime = useCallback(() => {
+  const playNotificationChime = useCallback(async () => {
     if (!soundEnabledRef.current) return;
     const now = Date.now();
     if (now - lastSoundTimeRef.current < 3000) return;
@@ -88,9 +111,15 @@ export const CrmProvider = ({ children }) => {
         audioCtxRef.current = new AudioCtx();
       }
       const ctx = audioCtxRef.current;
+      
       if (ctx.state === 'suspended') {
-        ctx.resume();
+        try {
+          await ctx.resume();
+        } catch (resErr) {}
       }
+
+      console.log(`[AudioContext] State at chime trigger: ${ctx.state}`);
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -106,7 +135,9 @@ export const CrmProvider = ({ children }) => {
 
       osc.start();
       osc.stop(ctx.currentTime + 0.25);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[AudioContext] Chime play error:', e);
+    }
   }, []);
 
   // Privacy-Compliant Desktop Notification (No Message Snippet, No Preview)
@@ -116,8 +147,9 @@ export const CrmProvider = ({ children }) => {
 
     if (Notification.permission === 'granted') {
       try {
-        const notif = new Notification("Nova mensagem", {
-          body: `Nova mensagem de ${contactName || 'um contato'}.`,
+        const titleText = contactName || 'Novo Contato';
+        const notif = new Notification(titleText, {
+          body: 'Nova mensagem',
           icon: '/favicon.ico',
           tag: `crm-msg-${contactId || 'unknown'}`
         });
